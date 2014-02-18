@@ -1,3 +1,8 @@
+.evam_graph.areachart,
+.evam_graph.areachartbrush {
+	font: 10px sans-serif;	
+}
+
 .evam_graph .axis path, 
 .evam_graph .axis line {
 	fill: none;
@@ -9,7 +14,11 @@
 .evam_graph.areachartbrush .area {
 	fill: steelblue;
 }
-	
+
+.evam_graph.areachartbrush .area {	
+	clip-path: url(#clip);
+}
+
 .evam_graph.areachart .focus circle {
 	fill: none;
 	stroke: red;
