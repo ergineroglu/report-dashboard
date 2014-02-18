@@ -1,0 +1,27 @@
+.evam_graph .axis path, 
+.evam_graph .axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+	
+.evam_graph.areachart .area, 
+.evam_graph.areachartbrush .area {
+	fill: steelblue;
+}
+	
+.evam_graph.areachart .focus circle {
+	fill: none;
+	stroke: red;
+}
+	
+.evam_graph.areachart .overlay {
+ 	fill: none;
+  	pointer-events: all;
+}
+
+.evam_graph.areachartbrush .brush .extent {
+  	stroke: #fff;
+  	fill-opacity: .250;
+  	shape-rendering: crispEdges;
+}
