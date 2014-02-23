@@ -36,7 +36,7 @@
           		<a class="navbar-brand" href="<c:url value="/dashboard/${userId}" />">EVAM Report Manager</a>
         	</div>
         	
-        	<!-- Collect the nav links, forms, and other content for toggling -->
+        	<!-- Collect the nav links, forms, and other content for toggling
         	<div class="collapse navbar-collapse navbar-ex1-collapse">
          		<ul class="nav navbar-nav navbar-right navbar-user">            		
            			<li class="dropdown user-dropdown">
@@ -52,7 +52,7 @@
 		              	</ul>
            			</li>
           		</ul>
-        	</div><!-- /.navbar-collapse -->
+        	</div> -->
       	</nav>
       	
       	<div id="page-wrapper">
@@ -68,11 +68,12 @@
 						<div class="row">
 							<c:forEach items="${dashboardTab.tabPortlets}" var="dashboardPortlet">
           						<c:set var="numberOfCols" value="${portlet:widthClass(dashboardPortlet.value.portletWidth)}" />
-          						<div class="col-lg-${numberOfCols}">
+          						<div class="col-md-${numberOfCols}" style="margin-bottom: 15px;">
             						<div class="panel panel-primary">
               							<div class="panel-heading">
                 							<h3 class="panel-title">
-                								<span class="glyphicon glyphicon-signal"></span> ${dashboardPortlet.value.portletTitle} 
+                								<span class="glyphicon glyphicon-signal"></span> ${dashboardPortlet.value.portletTitle}
+                								<span title="Redraw Graph" class="refresh-graph pull-right btn btn-xs glyphicon glyphicon-refresh"></span>
 											</h3>
            								</div>
            								<div class="panel-body">
@@ -92,22 +93,36 @@
 													 data-title="${dashboardPortlet.value.portletTitle}"
 													 data-key="${dashboardPortlet.key}"
 													 data-type="${dashboardPortlet.value.portletType.name}"
+													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}"
+													 data-request-url="${dashboardPortletUrl}"
 													 data-x-axis="${dashboardPortlet.value.axisXName}"
 													 data-y-axis="${dashboardPortlet.value.axisYName}"
-													 data-request-url="${dashboardPortletUrl}">
+													 data-x-axis-type="${dashboardPortlet.value.axisXType}"
+													 data-y-axis-type="${dashboardPortlet.value.axisYType}"
+													 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
+													 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
+													 data-brush="${dashboardPortlet.value.brush}"
+													 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
 												</div>
 											</c:if>
 											
-											<c:if test="${dashboardPortlet.value.portletType.name == 'areachartbrush'}">
+											<c:if test="${dashboardPortlet.value.portletType.name == 'linechart'}">
 												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
 												<div id="evam_drawing_${dashboardPortlet.key}" 
-													 class="evam_graph areachartbrush"
+													 class="evam_graph linechart"
 													 data-title="${dashboardPortlet.value.portletTitle}"
 													 data-key="${dashboardPortlet.key}"
 													 data-type="${dashboardPortlet.value.portletType.name}"
+													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}"
+													 data-request-url="${dashboardPortletUrl}"
 													 data-x-axis="${dashboardPortlet.value.axisXName}"
 													 data-y-axis="${dashboardPortlet.value.axisYName}"
-													 data-request-url="${dashboardPortletUrl}">
+													 data-x-axis-type="${dashboardPortlet.value.axisXType}"
+													 data-y-axis-type="${dashboardPortlet.value.axisYType}"
+													 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
+													 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
+													 data-brush="${dashboardPortlet.value.brush}"
+													 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
 												</div>
 											</c:if>
 										</div>
@@ -122,6 +137,7 @@
    	</div>
 
 	<!-- JS -->
+	<script type="text/javascript" src="<c:url value="/static/js/spin.js" />"></script>
 	<script type="text/javascript" src="<c:url value="/static/js/jquery.js" />"></script>	
 	<script type="text/javascript" src="<c:url value="/static/js/bootstrap.js" />"></script>
 	<script type="text/javascript" src="<c:url value="/static/js/bootstrap-slider.js" />"></script>
@@ -141,135 +157,53 @@
 				$($("#dashboardTabs li:first > a[data-toggle='tab']").attr('href')).addClass('active');
 			}	
 			
-			$(".evam_graph.areachart").each(function() {
-				var chart = new evam.Areachart($(this).data('key'), $(this).data('title'), 
-											   $(this).data('x-axis'), $(this).data('y-axis'),
-							   			   	   $(this).data('request-url'), null);
+			$(".evam_graph.linechart").each(function() {
+				var options = {
+					key: $(this).data('key'), 
+					title: $(this).data('title'), 
+					refreshInterval: $(this).data('refresh-interval'),
+					requestUrl: $(this).data('request-url'),
+   			   	   	xAxis: $(this).data('x-axis'), 
+   			   	   	yAxis: $(this).data('y-axis'),
+   			   		xAxisType: $(this).data('x-axis-type'), 
+			   	   	yAxisType: $(this).data('y-axis-type'),
+			   	 	xAxisFormat: $(this).data('x-axis-format'), 
+			   	   	yAxisFormat: $(this).data('y-axis-format'),
+   			   	   	brush: $(this).data('brush'),
+   			   		interpolate: $(this).data('interpolate')
+				};
+				var chart = new evam.Linechart(options);
 				chart.initialize();
-				chart.draw();
+				chart.update();	
+				$(this).bind('evam.resize', function() { chart.resize(); });
+				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
 			});
-			$(".evam_graph.areachartbrush").each(function() {
-				var chart = new evam.AreachartBrush($(this).data('key'), $(this).data('title'), 
-											   		$(this).data('x-axis'), $(this).data('y-axis'),
-							   			   	   		$(this).data('request-url'), null);
+			$(".evam_graph.areachart").each(function() {
+				var options = {
+					key: $(this).data('key'), 
+					title: $(this).data('title'), 
+					refreshInterval: $(this).data('refresh-interval'),
+					requestUrl: $(this).data('request-url'),
+   			   	   	xAxis: $(this).data('x-axis'), 
+   			   	   	yAxis: $(this).data('y-axis'), 
+   			   		xAxisType: $(this).data('x-axis-type'), 
+		   	   		yAxisType: $(this).data('y-axis-type'),
+		   	 		xAxisFormat: $(this).data('x-axis-format'), 
+		   	   		yAxisFormat: $(this).data('y-axis-format'),
+   			   	   	brush: $(this).data('brush'),
+   			   		interpolate: $(this).data('interpolate')
+				};
+				var chart = new evam.Areachart(options);
 				chart.initialize();
-				chart.draw();
+				chart.update();	
+				$(this).bind('evam.resize', function() { chart.resize(); });
+				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
+			});
+			
+			$(window).resize(function(){
+				$(".evam_graph").trigger('evam.resize');
 			});
 		});
-		
-// 		function createAreaChart() {
-// 			var margin = {top: 5, right: 10, bottom: 90, left: 45},
-// 		    width = $("#areachart_scenario_values").width() - margin.left - margin.right,
-// 		    height = 500 - margin.top - margin.bottom;
-
-// 			var parseDate = d3.time.format("%d-%b-%y").parse;
-// 			var bisectDate = d3.bisector(function(d) { return d.date; }).left;
-// 			var formatValue = d3.format(",.2f");
-// 		    var formatCurrency = function(d) { return "$" + formatValue(d); };
-	
-// 			var x = d3.time.scale()
-// 			    .range([0, width]);
-	
-// 			var y = d3.scale.linear()
-// 			    .range([height, 0]);
-	
-// 			var xAxis = d3.svg.axis()
-// 			    .scale(x)
-// 			    .orient("bottom")			    
-// 			    .tickFormat(d3.time.format("%Y-%m-%d"));;
-	
-// 			var yAxis = d3.svg.axis()
-// 			    .scale(y)
-// 			    .orient("left");
-	
-// 			var area = d3.svg.area()
-// 			    .x(function(d) { return x(d.date); })
-// 			    .y0(height)
-// 			    .y1(function(d) { return y(d.close); });
-	
-// 			var svg = d3.select("#areachart_scenario_values").append("svg")
-// 			    .attr("width", width + margin.left + margin.right)
-// 			    .attr("height", height + margin.top + margin.bottom)
-// 			  	.append("g")
-// 			    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-			
-// 			var data_url = '<c:url value="/data/${userId}/scenario_view/scenario_values" />';
-// 			d3.tsv(data_url, function(error, data) {
-// 				data.forEach(function(d) {
-// 					d.date = parseDate(d.date);
-// 				    d.close = +d.close;
-// 			  	});
-				
-// 				data.sort(function(a, b) {
-// 				    return a.date - b.date;
-// 				  });
-
-// 				  x.domain([data[0].date, data[data.length - 1].date]);
-// 				  y.domain(d3.extent(data, function(d) { return d.close; }));
-
-// 			  	svg.append("path")
-// 				      .datum(data)
-// 				      .attr("class", "area")
-// 				      .attr("d", area);
-			  	
-// 			    svg.append("g")
-// 			      .attr("class", "x axis")
-// 			      .attr("transform", "translate(0," + height + ")")
-// 			      .call(xAxis)
-// 			      .selectAll("text")  
-// 		            .style("text-anchor", "end")
-// 		            .attr("dx", "-.8em")
-// 		            .attr("dy", ".15em")
-// 		            .attr("transform", function(d) {
-// 		                return "rotate(-65)";
-//                   });
-//                  svg.append("text")      // text label for the x axis
-// 			        .attr("x", width - 6)			        
-// 			        .attr("y",  height - 6)
-// 			        .style("text-anchor", "end")
-// 			        .text("Date");
-
-// 			  svg.append("g")
-// 			      .attr("class", "y axis")
-// 			      .call(yAxis);
-			  
-// 			  svg.append("text")
-// 			      .attr("transform", "rotate(-90)")
-// 			      .attr("y", 6)
-// 			      .attr("dy", ".71em")
-// 			      .style("text-anchor", "end")
-// 			      .text("Prices ($)");
-			  
-// 			  var focus = svg.append("g")
-// 		      .attr("class", "focus")
-// 		      .style("display", "none");
-
-// 		  focus.append("circle")
-// 		      .attr("r", 10);
-
-// 		  focus.append("text")
-// 		      .attr("x", 12)
-// 		      .attr("dy", ".8em");
-		  
-// 		  var areachart_mousemove = function() {
-// 			    var x0 = x.invert(d3.mouse(this)[0]),
-// 			        i = bisectDate(data, x0, 1),
-// 			        d0 = data[i - 1],
-// 			        d1 = data[i],
-// 			        d = x0 - d0.date > d1.date - x0 ? d1 : d0;
-// 			    focus.attr("transform", "translate(" + x(d.date) + "," + y(d.close) + ")");
-// 			    focus.select("text").text(formatCurrency(d.close));
-// 		  };
-
-// 		  svg.append("rect")
-// 		      .attr("class", "overlay")
-// 		      .attr("width", width)
-// 		      .attr("height", height)
-// 		      .on("mouseover", function() { focus.style("display", null); })
-// 		      .on("mouseout", function() { focus.style("display", "none"); })
-// 		      .on("mousemove", areachart_mousemove);		  
-// 		  });
-//		}
 	</script>
 </body>
 

@@ -31,11 +31,12 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.intellica.evam.report.model.DashboardAreaChartBrushPortlet;
 import com.intellica.evam.report.model.DashboardAreaChartPortlet;
+import com.intellica.evam.report.model.DashboardLineChartPortlet;
 import com.intellica.evam.report.model.DashboardPortlet;
 import com.intellica.evam.report.model.DashboardTab;
 import com.intellica.evam.report.model.DashboardTextboxPortlet;
+import com.intellica.evam.report.util.ParserUtils;
 import com.intellica.evam.report.util.PortletType;
 
 @Controller
@@ -120,31 +121,47 @@ public class PanelController {
 	
 	private DashboardPortlet parsePortlet(Element portletElement) {
 		// must fields
-		String portletKey = portletElement.getElementsByTagName("key").item(0).getTextContent();
-		String portletTitle = portletElement.getElementsByTagName("title").item(0).getTextContent();
-		PortletType portletType = PortletType.fromName(portletElement.getElementsByTagName("type").item(0).getTextContent());
+		String portletKey = ParserUtils.readSingleTagValueString(portletElement, "key");
+		String portletTitle = ParserUtils.readSingleTagValueString(portletElement, "title");
+		PortletType portletType = PortletType.fromName(ParserUtils.readSingleTagValueString(portletElement, "type"));
 		// optional fields
-		NodeList portletWidthNodes = portletElement.getElementsByTagName("width");
-		Integer portletWidth = Integer.valueOf(portletWidthNodes.getLength() > 0 ? portletWidthNodes.item(0).getTextContent() : "50");
-		NodeList portletRefreshNodes = portletElement.getElementsByTagName("refreshInterval");
-		Integer refreshInterval = (portletRefreshNodes.getLength() > 0 ? Integer.valueOf(portletRefreshNodes.item(0).getTextContent()) : null);
+		Integer portletWidth = ParserUtils.readSingleTagValueInteger(portletElement, "width", 50);		
+		Integer refreshInterval = ParserUtils.readSingleTagValueInteger(portletElement, "refreshInterval", -1);
 		
 		// type specific fields and portlet creation
+		DashboardPortlet portlet = this.portletFactory(portletType, portletKey, portletTitle, portletWidth, refreshInterval);
 		switch(portletType) {
-		case TEXT_BOX: 
-			return new DashboardTextboxPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
+		case LINE_CHART:
 		case AREA_CHART:
-			DashboardAreaChartPortlet areaChart = new DashboardAreaChartPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
-			areaChart.setAxisXName("X Axis");
-			areaChart.setAxisYName("Y Axis");
-			return areaChart;
-		case AREA_CHART_BRUSH:
-			DashboardAreaChartBrushPortlet areaChartBrush = new DashboardAreaChartBrushPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
-			areaChartBrush.setAxisXName("Zaman");
-			areaChartBrush.setAxisYName("Y Axis");
-			return areaChartBrush;
+			DashboardLineChartPortlet lineChart = (DashboardLineChartPortlet) portlet;
+			// optional fields			
+			lineChart.setAxisXName(ParserUtils.readSingleTagValueString(portletElement, "x-axis"));
+			lineChart.setAxisYName(ParserUtils.readSingleTagValueString(portletElement, "y-axis"));
+			lineChart.setAxisXType(ParserUtils.readSingleTagValueString(portletElement, "x-value-type", "string"));
+			lineChart.setAxisYType(ParserUtils.readSingleTagValueString(portletElement, "y-value-type", "number"));
+			lineChart.setAxisXFormat(ParserUtils.readSingleTagValueString(portletElement, "x-value-format"));
+			lineChart.setAxisYFormat(ParserUtils.readSingleTagValueString(portletElement, "y-value-format"));
+			lineChart.setInterpolationMethod(ParserUtils.readSingleTagValueString(portletElement, "interpolationMethod"));
+			lineChart.setBrush(ParserUtils.readSingleTagValueBoolean(portletElement, "brush"));
+			break;
 		default:
-			return null;
+			break;
+		}
+		
+		return portlet;
+	}
+	
+	private DashboardPortlet portletFactory(PortletType portletType, 
+											String portletKey, 
+											String portletTitle, 
+											Integer portletWidth,
+											Integer refreshInterval)
+	{
+		switch(portletType) {
+			case TEXT_BOX: return new DashboardTextboxPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
+			case LINE_CHART: return new DashboardLineChartPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
+			case AREA_CHART: return new DashboardAreaChartPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
+			default: return null;
 		}
 	}
 }
