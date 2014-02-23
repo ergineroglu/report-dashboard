@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC "-//Hibernate/Hibernate Configuration DTD 3.0//EN" "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory>
+		<property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+		<property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/evam_report</property>
+		<property name="hibernate.connection.password">evam</property>		
+		<property name="hibernate.connection.username">evam</property>
+		<property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property>
+		<property name="hibernate.show_sql">true</property>
+		<property name="hibernate.hbm2ddl.auto">none</property>
+		
+<!-- 		<property name="hibernate.connection.driver_class">org.postgresql.Driver</property> -->
+<!-- 		<property name="hibernate.connection.url">jdbc:postgresql://77.223.157.16:5432/evam</property> -->
+<!-- 		<property name="hibernate.connection.password">evamusr</property>		 -->
+<!-- 		<property name="hibernate.connection.username">evamusr</property> -->
+<!-- 		<property name="hibernate.dialect">org.hibernate.dialect.PostgreSQLDialect</property> -->
+<!-- 		<property name="hibernate.show_sql">false</property> -->
+<!-- 		<property name="hibernate.hbm2ddl.auto">none</property> -->
+
+		<property name="hibernate.c3p0.min_size">1</property>
+		<property name="hibernate.c3p0.max_size">10</property>
+		<property name="hibernate.c3p0.acquire_increment">1</property>
+		<property name="hibernate.c3p0.timeout">1800</property>
+		<property name="hibernate.c3p0.max_statements">0</property>
+		<property name="hibernate.c3p0.idle_test_period">1800</property>
+		<property name="hibernate.c3p0.numHelperThreads">10</property>
+	</session-factory>
+</hibernate-configuration>
