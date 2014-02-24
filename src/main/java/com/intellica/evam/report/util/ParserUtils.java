@@ -1,5 +1,8 @@
 package com.intellica.evam.report.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
@@ -45,5 +48,15 @@ public class ParserUtils {
 	static public Boolean readSingleTagValueBoolean(Element element, String tagName, Boolean defaultValue) {
 		NodeList tagNodes = element.getElementsByTagName(tagName);
 		return tagNodes.getLength() > 0 ? Boolean.valueOf(tagNodes.item(0).getTextContent()) : defaultValue;
+	}
+	
+	// list readers
+	static public List<String> readMultipleTagValueString(Element element, String tagName) {
+		NodeList tagNodes = element.getElementsByTagName(tagName);
+		List<String> resultList = new ArrayList<String>();
+		for(int i = 0; i < tagNodes.getLength(); i++) {
+			resultList.add(tagNodes.item(i).getTextContent());
+		}
+		return resultList;
 	}
 }

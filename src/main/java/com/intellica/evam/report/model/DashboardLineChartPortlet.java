@@ -23,11 +23,12 @@ public class DashboardLineChartPortlet extends DashboardPortlet {
 		super(PortletType.LINE_CHART);		
 	}
 	
-	public DashboardLineChartPortlet(String portletKey, 
+	public DashboardLineChartPortlet(DataSource dataSource,
+									 String portletKey,
 								   	 String portletTitle,
 								   	 Integer portletWidth,
 								   	 Integer refreshInterval) {
-		super(PortletType.LINE_CHART, portletKey, portletTitle, portletWidth, refreshInterval);
+		super(PortletType.LINE_CHART, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 	}
 
 	/**

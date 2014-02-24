@@ -8,6 +8,10 @@
 			<title>Evam Scenarios</title>
 			<type>textbox</type>
 			<width>40</width>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
 		</portlet>
 		
 		<portlet>
@@ -20,6 +24,10 @@
 			<x-value-type>time</x-value-type> <!-- Olası değerler: string, time, number -->
 			<x-value-format>%d.%m.%Y</x-value-format>
 			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
 		</portlet>
 		
 		<portlet>
@@ -28,26 +36,63 @@
 			<type>areachart</type>
 			<width>65</width>
 			<refreshInterval>120</refreshInterval>
-			<x-value-type>string</x-value-type> <!-- Olası değerler: string, time, number -->			
+			<x-value-type>string</x-value-type>			
 			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>A Event;500</value>
+					<value>B Event;406.7</value>
+					<value>C Event;195</value>
+					<value>D Event;643</value>
+					<value>E Event;490</value>
+				</values>
+			</data-source>
 		</portlet>
 		
 		<portlet>
-			<key>scenario_name4</key>
-			<title>Evam Scenarios</title>
-			<type>textbox</type>
-			<width>15</width>
-		</portlet>
-		
-		<portlet>
-			<key>scenario_values_brush</key>
+			<key>scenario_values_brush_xx</key>
 			<title>Evam Scenarios</title>
 			<type>areachart</type>
 			<width>100</width>
 			<brush>true</brush>
-			<x-value-type>time</x-value-type> <!-- Olası değerler: string, time, number -->
-			<x-value-format>%d.%m.%Y</x-value-format>
-			<y-value-type>number</y-value-type> 
+			<x-value-type>number</x-value-type>			
+			<y-value-type>time</y-value-type> 
+			<y-value-format>%d.%m.%Y</y-value-format>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>100; 20.01.2014</value>
+					<value>300; 21.01.2014</value>
+					<value>200; 22.01.2014</value>
+					<value>400; 19.01.2014</value>
+					<value>700; 31.01.2014</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_brush_yy</key>
+			<title>Evam Scenarios</title>
+			<type>areachart</type>
+			<width>100</width>
+			<brush>true</brush>
+			<x-value-type>time</x-value-type>
+			<x-value-format>%d.%m.%Y</x-value-format>		
+			<y-value-type>string</y-value-type> 
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>20.01.2014; A Event</value>
+					<value>21.01.2014; B Event</value>
+					<value>22.01.2014; C Event</value>
+					<value>19.01.2014; E Event</value>
+					<value>31.01.2014; H Event</value>
+				</values>
+			</data-source>
 		</portlet>
 		
 		<portlet>
@@ -58,6 +103,10 @@
 			<x-value-type>time</x-value-type> <!-- Olası değerler: string, time, number -->
 			<x-value-format>%d.%m.%Y</x-value-format>
 			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
 		</portlet>
 		
 		<portlet>
@@ -70,6 +119,10 @@
 			<x-value-type>time</x-value-type> <!-- Olası değerler: string, time, number -->
 			<x-value-format>%d.%m.%Y</x-value-format>
 			<y-value-type>number</y-value-type>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
 		</portlet>
 		
 <!-- 		<portlet> -->

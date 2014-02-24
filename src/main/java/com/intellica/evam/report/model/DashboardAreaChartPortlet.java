@@ -15,11 +15,12 @@ public class DashboardAreaChartPortlet extends DashboardLineChartPortlet {
 		this.setPortletType(PortletType.AREA_CHART);
 	}
 	
-	public DashboardAreaChartPortlet(String portletKey, 
+	public DashboardAreaChartPortlet(DataSource dataSource,
+									 String portletKey, 
 								   	 String portletTitle,
 								   	 Integer portletWidth,
 								   	 Integer refreshInterval) {
-		super(portletKey, portletTitle, portletWidth, refreshInterval);
+		super(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 		this.setPortletType(PortletType.AREA_CHART);
 	}
 }

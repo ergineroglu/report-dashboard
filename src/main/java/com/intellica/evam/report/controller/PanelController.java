@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -19,6 +18,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,11 +31,16 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.intellica.evam.report.model.ConstantDataSource;
 import com.intellica.evam.report.model.DashboardAreaChartPortlet;
 import com.intellica.evam.report.model.DashboardLineChartPortlet;
 import com.intellica.evam.report.model.DashboardPortlet;
 import com.intellica.evam.report.model.DashboardTab;
 import com.intellica.evam.report.model.DashboardTextboxPortlet;
+import com.intellica.evam.report.model.DataSource;
+import com.intellica.evam.report.model.DatabaseDataSource;
+import com.intellica.evam.report.service.PortletCacheService;
+import com.intellica.evam.report.util.DataSourceType;
 import com.intellica.evam.report.util.ParserUtils;
 import com.intellica.evam.report.util.PortletType;
 
@@ -45,11 +50,8 @@ public class PanelController {
 	private static final Logger logger = LoggerFactory.getLogger(PanelController.class);
 	private static final String DASHBOARD_FILE_PATTERN = "user%d/dashboard.xml";
 	
-	@RequestMapping(value = "/old", method = RequestMethod.GET)
-	public String home(Locale locale, Model model) {
-		
-		return "oldindex";
-	}
+	@Autowired
+	PortletCacheService portletCacheService;
 	
 	@RequestMapping(value = "/dashboard/{userId}", method = RequestMethod.GET)
 	public String dashboard(Model model, @PathVariable int userId) {
@@ -71,7 +73,7 @@ public class PanelController {
 				Node tabNode = tabList.item(i);
 				if(tabNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element tabElement = (Element) tabNode;
-					dashboardTabs.add(this.parseTab(tabElement));
+					dashboardTabs.add(this.parseTab(userId, tabElement));
 				}
 				else {
 					logger.error("Unexpected tab node in xml, cannot convert to element node");
@@ -98,9 +100,10 @@ public class PanelController {
 		return "dashboard";
 	}
 	
-	private DashboardTab parseTab(Element tabElement) {
-		DashboardTab newTab = new DashboardTab(tabElement.getElementsByTagName("key").item(0).getTextContent(),
-				   							   tabElement.getElementsByTagName("title").item(0).getTextContent());
+	private DashboardTab parseTab(int userId, Element tabElement) {
+		String tabKey = tabElement.getElementsByTagName("key").item(0).getTextContent();
+		String tabTitle = tabElement.getElementsByTagName("title").item(0).getTextContent();
+		DashboardTab newTab = new DashboardTab(tabKey, tabTitle);
 
 		// parse portlets of tab
 		NodeList portletList = tabElement.getElementsByTagName("portlet");
@@ -109,7 +112,10 @@ public class PanelController {
 			if(portletNode.getNodeType() == Node.ELEMENT_NODE) {
 				Element portletElement = (Element) portletNode;
 				DashboardPortlet portlet = this.parsePortlet(portletElement);
-				if(portlet != null) newTab.addPortlet(portlet.getPortletKey(), portlet);
+				if(portlet != null) { 
+					newTab.addPortlet(portlet.getPortletKey(), portlet);
+					portletCacheService.setPortlet(userId, tabKey, portlet.getPortletKey(), portlet);
+				}
 			}
 			else {
 				logger.error("Unexpected portlet node in xml, cannot convert to element node");
@@ -128,8 +134,12 @@ public class PanelController {
 		Integer portletWidth = ParserUtils.readSingleTagValueInteger(portletElement, "width", 50);		
 		Integer refreshInterval = ParserUtils.readSingleTagValueInteger(portletElement, "refreshInterval", -1);
 		
+		// data source
+		Element dataSourceElement = (Element) portletElement.getElementsByTagName("data-source").item(0);
+		DataSource dataSource = this.parseDataSource(dataSourceElement);
+		
 		// type specific fields and portlet creation
-		DashboardPortlet portlet = this.portletFactory(portletType, portletKey, portletTitle, portletWidth, refreshInterval);
+		DashboardPortlet portlet = this.portletFactory(portletType, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 		switch(portletType) {
 		case LINE_CHART:
 		case AREA_CHART:
@@ -152,16 +162,36 @@ public class PanelController {
 	}
 	
 	private DashboardPortlet portletFactory(PortletType portletType, 
+											DataSource dataSource,
 											String portletKey, 
 											String portletTitle, 
 											Integer portletWidth,
 											Integer refreshInterval)
 	{
-		switch(portletType) {
-			case TEXT_BOX: return new DashboardTextboxPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
-			case LINE_CHART: return new DashboardLineChartPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
-			case AREA_CHART: return new DashboardAreaChartPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
-			default: return null;
+		switch (portletType) {
+		case TEXT_BOX: return new DashboardTextboxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval);
+		case LINE_CHART: return new DashboardLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+		default: return null;
+		}
+	}
+
+	private DataSource parseDataSource(Element dataSourceElement) {
+		// must fields
+		DataSourceType dataSourceType = DataSourceType.fromName(ParserUtils.readSingleTagValueString(dataSourceElement, "type"));
+		switch (dataSourceType) {
+		case DATABASE:
+			// specific fields
+			String queryTemplate = ParserUtils.readSingleTagValueString(dataSourceElement, "query");
+			return new DatabaseDataSource(queryTemplate);
+		case CONSTANT:
+			// specific fields
+			Element valuesElement = (Element) dataSourceElement.getElementsByTagName("values").item(0);
+			String delimiter = ParserUtils.readSingleTagValueString(valuesElement, "delimiter", ",");
+			List<String> values = ParserUtils.readMultipleTagValueString(valuesElement, "value");
+			return new ConstantDataSource(delimiter, values);
+		default:
+			return null;
 		}
 	}
 }

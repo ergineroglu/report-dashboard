@@ -8,7 +8,6 @@ package com.intellica.evam.report.controller;
  */
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -20,9 +19,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.intellica.evam.report.dao.RDBMSDao;
+import com.intellica.evam.report.model.DashboardPortlet;
 import com.intellica.evam.report.model.GraphData;
-import com.intellica.evam.report.model.GraphData2D;
+import com.intellica.evam.report.service.PortletCacheService;
+import com.intellica.evam.report.util.ResourceNotFoundException;
 
 @Controller
 public class DataController {
@@ -30,7 +30,7 @@ public class DataController {
 	private static final Logger logger = LoggerFactory.getLogger(DataController.class);	
 	
 	@Autowired
-	RDBMSDao rdbmsDao;
+	PortletCacheService portletCacheService;
 	
 	@RequestMapping(value = "/data/{userId}/{tabKey}/{portletKey}", method = RequestMethod.POST)
 	public @ResponseBody GraphData[] data(@PathVariable int userId, 
@@ -48,9 +48,21 @@ public class DataController {
 //			responseList.add(new GraphData2D<String, Double>("01.05.2012", 582.13));
 //			responseList.add(new GraphData2D<String, Double>("30.02.2013", 182.13));
 //			responseList.add(new GraphData2D<String, Double>("12.03.2013", 782.13));
-			
-			List<GraphData2D<String, Integer>> responseList = 
-				rdbmsDao.executeQuery2D("select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')");
+			// get portlet
+			DashboardPortlet portlet = portletCacheService.getPortlet(userId, tabKey, portletKey);
+			if(portlet == null) {
+				throw new ResourceNotFoundException(String.format("Portlet For User = %d, Tab = %s, Key = %s", userId, tabKey, portletKey));
+			}
+			// get data
+			List<? extends GraphData> responseList = null;
+			switch(portlet.getPortletType()) {
+			case AREA_CHART:
+			case LINE_CHART:
+				responseList = portlet.getDataSource().getData2D();
+				break;
+			default:
+				break;
+			}
 			
 			GraphData[] responseArray = new GraphData[responseList.size()];
 			responseArray = responseList.toArray(responseArray);
@@ -61,5 +73,4 @@ public class DataController {
 	    	return null;
 	    }		
 	}
-
 }

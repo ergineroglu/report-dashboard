@@ -16,11 +16,12 @@ public class DashboardTextboxPortlet extends DashboardPortlet {
 		super(PortletType.TEXT_BOX);		
 	}
 	
-	public DashboardTextboxPortlet(String portletKey, 
+	public DashboardTextboxPortlet(DataSource dataSource,
+								   String portletKey, 
 								   String portletTitle,
 								   Integer portletWidth,
 								   Integer refreshInterval) {
-		super(PortletType.TEXT_BOX, portletKey, portletTitle, portletWidth, refreshInterval);
+		super(PortletType.TEXT_BOX, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 	}
 
 	/**
