@@ -3,6 +3,21 @@
 	<tab>
 		<key>scenario_view</key>
 		<title>Scenario View</title>
+		
+		<portlet>
+			<key>scenario_values3</key>
+			<title>Evam Scenarios</title>
+			<type>donutchart</type>
+			<width>100</width>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values2</key>
+			<title>Evam Scenarios</title>
+			<type>piechart</type>
+			<width>100</width>
+		</portlet>
+		
 		<portlet>
 			<key>scenario_name</key>
 			<title>Evam Scenarios</title>

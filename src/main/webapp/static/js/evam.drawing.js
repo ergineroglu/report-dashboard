@@ -11,6 +11,14 @@ evam.customTimeFormat = d3.time.format.multi([
 	["%b", function(d) { return d.getMonth(); }],
 	["%Y", function() { return true; }]
 ]);
+evam.radionToAngle = function(angle, offset, threshold) {
+    var a = angle * 180 / Math.PI + offset;
+    return a > threshold ? a - 180 : a;
+};
+evam.pieChartTextAngle = function(angle, offset) {
+	var a = angle * 180 / Math.PI + offset;
+	return 	0 < a && a < 180 ? a - 90 : 180 < a && a < 270 ? a + 90 : -90 < a && a < 0 ? a + 90 : a;
+};
 
 // Graph 
 evam.Graph = function(key, title, xAxis, yAxis, requestUrl, requestData){ 
@@ -162,4 +170,108 @@ evam.AreachartBrush.prototype.draw = function() {
 	})
 	.header("Content-Type","application/x-www-form-urlencoded")
     .send("POST");
+};
+
+//Pie Chart
+evam.Piechart = function(key, title, requestUrl, requestData) {
+	evam.Graph.call(this, key, title, 'x', 'y', requestUrl, requestData);
+	this.outerHeight = 500;
+	this.margin = {
+		top : 5,
+		right : 10,
+		bottom : 20,
+		left : 45
+	};
+	this.width = this.outerWidth - this.margin.left - this.margin.right;
+	this.height = this.outerHeight - this.margin.top - this.margin.bottom;
+	this.radius = Math.min(this.width, this.height) / 2;
+};
+evam.Piechart.prototype = Object.create(evam.Graph.prototype);
+evam.Piechart.prototype.initialize = function(value) {
+	var innerRadiusValue = 0;
+	if (value == "donut"){
+		innerRadiusValue = this.radius - 130;
+	}
+	this.color = d3.scale.category20c();
+	this.arc = d3.svg.arc().outerRadius(this.radius - 10).innerRadius(innerRadiusValue);
+	this.pie = d3.layout.pie().sort(null).value(function(d) {
+		return d.y;
+	});
+	this.svg = d3.select(this.jqueryObject[0]).append("svg").attr("width",
+			this.width).attr("height", this.height)
+			.attr("style", "padding:50px; cursor:pointer;").append("g").attr(
+			"transform",
+			"translate(" + this.width / 2 + "," + this.height / 2 + ")");
+
+};
+evam.Piechart.prototype.draw = function(value) {
+	var pieChart = this;
+	var text = "";
+	var c1, c2, c3 = 1;
+	if (value == "donut"){
+		c1 = 0.1;
+		c2 = 1.6;
+		c3 = 1;
+	} else {
+		c1 = 0.1;
+		c2 = 2.3;
+		c3 = 1.2;
+	}
+	d3.json(
+			this.requestUrl,
+			function(error, data) {
+				if (error)
+					return console.warn(error);
+				// parse data
+				data.forEach(function(d) {
+					d.y = +d.y;
+				});
+				var r2d = Math.PI / 180;
+				var g = pieChart.svg.selectAll(".arc").data(pieChart.pie(data))
+						.enter()
+						.append("g")
+						.attr("class", "arc")
+						.on("mouseover",
+							function(d) {
+								var c = pieChart.arc.centroid(d);
+								pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)")
+																.style("font-size", "14px");
+								pieChart.svg.selectAll(".arc").filter(function(x) { return x.data.x == d.data.x; })
+																.attr("transform", "translate(" + c[0] * c1 + "," + c[1] * c1 + ")")
+																.style("font-size", "20px");
+								focus.style("display", null);
+								focus.attr("transform", "translate(" + c[0] * c2 + "," + c[1] * c2 + ") rotate(" + evam.pieChartTextAngle((d.startAngle + d.endAngle) / 2, -90) + ")");
+							    focus.select("text").text(d.data.y).style("fill", fill()).style("text-anchor", "middle");
+								function fill() {
+									return pieChart.color(d.data.x);
+								};
+							})
+						.on("mouseout", 
+							function(d) {
+								focus.style("display", "none");
+								pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)")
+																.style("font-size", "14px");
+							});
+				g.append("path").attr("d", pieChart.arc).style("fill",
+						function(d) {
+							return pieChart.color(d.data.x);
+						});
+
+				g.append("text")
+					.attr("transform", 
+						function(d) {
+							var c = pieChart.arc.centroid(d);
+							return "translate(" + c[0] * c3 + "," + c[1] * c3 + ") rotate(" + evam.radionToAngle((d.startAngle + d.endAngle) / 2, -90, 90) + ")";
+						})					
+					.attr("dy", ".35em")
+					.attr("class", "pieChartArc")
+					.style("text-anchor", "middle")
+					.text(
+						function(d) {
+							return d.data.x;
+						});
+				var focus = pieChart.svg.append("g").attr("class", "focus").style("display", "none");				
+				focus.append("text").style("fill", "red").style("text-anchor", "middle").style("font-size", "20px").style("font-weight", "bold");
+			}).header("Content-Type", "application/x-www-form-urlencoded")
+			.send("POST");
 };

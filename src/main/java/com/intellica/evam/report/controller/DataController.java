@@ -33,15 +33,19 @@ public class DataController {
 		
 		try {
 			ArrayList<GraphData> responseList = new ArrayList<GraphData>();
-			responseList.add(new GraphData2D<String, Double>("01.03.2012", 298.13));
+			responseList.add(new GraphData2D<String, Double>("01.03.2012", 348.13));
 			responseList.add(new GraphData2D<String, Double>("10.03.2012", 621.13));
 			responseList.add(new GraphData2D<String, Double>("18.03.2012", 500.13));
 			responseList.add(new GraphData2D<String, Double>("20.03.2012", 482.13));
 			responseList.add(new GraphData2D<String, Double>("21.03.2012", 382.13));
 			responseList.add(new GraphData2D<String, Double>("30.04.2012", 590.13));
+			responseList.add(new GraphData2D<String, Double>("30.07.2012", 82.13));
 			responseList.add(new GraphData2D<String, Double>("01.05.2012", 582.13));
 			responseList.add(new GraphData2D<String, Double>("30.02.2013", 182.13));
 			responseList.add(new GraphData2D<String, Double>("12.03.2013", 782.13));
+			responseList.add(new GraphData2D<String, Double>("21.08.2013", 282.13));
+			responseList.add(new GraphData2D<String, Double>("30.11.2013", 690.13));
+			responseList.add(new GraphData2D<String, Double>("15.12.2012", 184.13));
 			
 			GraphData[] responseArray = new GraphData[responseList.size()];
 			responseArray = responseList.toArray(responseArray);

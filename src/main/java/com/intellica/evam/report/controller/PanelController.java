@@ -33,6 +33,8 @@ import org.xml.sax.SAXException;
 
 import com.intellica.evam.report.model.DashboardAreaChartBrushPortlet;
 import com.intellica.evam.report.model.DashboardAreaChartPortlet;
+import com.intellica.evam.report.model.DashboardDonutChartPortlet;
+import com.intellica.evam.report.model.DashboardPieChartPortlet;
 import com.intellica.evam.report.model.DashboardPortlet;
 import com.intellica.evam.report.model.DashboardTab;
 import com.intellica.evam.report.model.DashboardTextboxPortlet;
@@ -143,6 +145,12 @@ public class PanelController {
 			areaChartBrush.setAxisXName("Zaman");
 			areaChartBrush.setAxisYName("Y Axis");
 			return areaChartBrush;
+		case PIE_CHART:
+			DashboardPieChartPortlet pieChart = new DashboardPieChartPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
+			return pieChart;
+		case DONUT_CHART:
+			DashboardDonutChartPortlet donutChart = new DashboardDonutChartPortlet(portletKey, portletTitle, portletWidth, refreshInterval);
+			return donutChart;
 		default:
 			return null;
 		}

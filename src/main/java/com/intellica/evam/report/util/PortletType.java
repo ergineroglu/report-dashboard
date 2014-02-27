@@ -11,7 +11,9 @@ public enum PortletType {
 	SELECT_BOX("selectbox"),
 	RADIO_BUTTON("radiobutton"),
 	AREA_CHART("areachart"),
-	AREA_CHART_BRUSH("areachartbrush");
+	AREA_CHART_BRUSH("areachartbrush"),
+	DONUT_CHART("donutchart"),
+	PIE_CHART("piechart");
 	
 	private String name;
 	

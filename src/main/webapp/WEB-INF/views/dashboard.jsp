@@ -110,6 +110,28 @@
 													 data-request-url="${dashboardPortletUrl}">
 												</div>
 											</c:if>
+											
+											<c:if test="${dashboardPortlet.value.portletType.name == 'piechart'}">
+												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
+												<div id="evam_drawing_${dashboardPortlet.key}" 
+													 class="evam_graph piechart"
+													 data-title="${dashboardPortlet.value.portletTitle}"
+													 data-key="${dashboardPortlet.key}"
+													 data-type="${dashboardPortlet.value.portletType.name}"
+													 data-request-url="${dashboardPortletUrl}">
+												</div>
+											</c:if>
+											
+											<c:if test="${dashboardPortlet.value.portletType.name == 'donutchart'}">
+												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
+												<div id="evam_drawing_${dashboardPortlet.key}" 
+													 class="evam_graph donutchart"
+													 data-title="${dashboardPortlet.value.portletTitle}"
+													 data-key="${dashboardPortlet.key}"
+													 data-type="${dashboardPortlet.value.portletType.name}"
+													 data-request-url="${dashboardPortletUrl}">
+												</div>
+											</c:if>
 										</div>
             						</div>
           						</div>
@@ -154,6 +176,18 @@
 							   			   	   		$(this).data('request-url'), null);
 				chart.initialize();
 				chart.draw();
+			});
+			$(".evam_graph.piechart").each(function() {
+				var chart = new evam.Piechart($(this).data('key'), $(this).data('title'), 
+							   			   	   		$(this).data('request-url'), null);
+				chart.initialize("");
+				chart.draw("");
+			});
+			$(".evam_graph.donutchart").each(function() {
+				var chart = new evam.Piechart($(this).data('key'), $(this).data('title'), 
+							   			   	   		$(this).data('request-url'), null);
+				chart.initialize("donut");
+				chart.draw("donut");
 			});
 		});
 		
