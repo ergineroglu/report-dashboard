@@ -15,4 +15,6 @@ public interface DataSource {
 	public List<? extends GraphData> getData2D();
 	public List<? extends GraphData> getData2D(Map<String, String> parameters);
 	
+	public List<? extends GraphData> getData3D();
+	public List<? extends GraphData> getData3D(Map<String, String> parameters);
 }

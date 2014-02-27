@@ -47,4 +47,23 @@ public class ConstantDataSource implements DataSource {
 		return resultList;
 	}
 
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData3D()
+	 */
+	@Override
+	public List<? extends GraphData> getData3D() {
+		return this.getData3D(new HashMap<String, String>());
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData3D(java.util.Map)
+	 */
+	@Override
+	public List<? extends GraphData> getData3D(Map<String, String> parameters) {
+		List<GraphData3D<String, String, String>> resultList = new ArrayList<GraphData3D<String, String, String>>();
+		for(String[] row: dataRows) {
+			resultList.add(new GraphData3D<String, String, String>(row[0], row[1], row[2]));
+		}
+		return resultList;
+	}
 }

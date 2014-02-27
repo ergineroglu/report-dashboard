@@ -11,6 +11,7 @@ import org.hibernate.Transaction;
 import org.springframework.stereotype.Repository;
 
 import com.intellica.evam.report.model.GraphData2D;
+import com.intellica.evam.report.model.GraphData3D;
 
 /**
  * Author: eeroglu
@@ -87,6 +88,30 @@ public class RDBMSDao {
 		for(Object[] rowIter: genericResultList) {
 			if(rowIter.length >= 2) {
 				resultList.add(new GraphData2D<K, V>((K) rowIter[0], (V) rowIter[1]));
+			}
+			else {
+				// TODO: handle row with errors
+			}
+		}
+		
+		return resultList;
+	}
+	
+	// Graph3D getters
+	public <X extends Serializable, Y extends Serializable, Z extends Serializable> List<GraphData3D<X, Y, Z>> executeQuery3D(String queryString) {
+		return this.executeQuery3D(queryString, new HashMap<String, String>());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <X extends Serializable, Y extends Serializable, Z extends Serializable> List<GraphData3D<X, Y, Z>> executeQuery3D(
+			String queryString, Map<String, String> queryParameters) {
+		// get generic results
+		List<Object[]> genericResultList = this.executeQuery(queryString, queryParameters);
+		// map results
+		List<GraphData3D<X, Y, Z>> resultList = new ArrayList<GraphData3D<X, Y, Z>>();
+		for(Object[] rowIter: genericResultList) {
+			if(rowIter.length >= 2) {
+				resultList.add(new GraphData3D<X, Y, Z>((X) rowIter[0], (Y) rowIter[1], (Z) rowIter[2]));
 			}
 			else {
 				// TODO: handle row with errors

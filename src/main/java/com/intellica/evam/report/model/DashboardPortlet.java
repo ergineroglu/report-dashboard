@@ -27,7 +27,7 @@ public class DashboardPortlet {
 							Integer portletWidth,
 							Integer refreshInterval) {
 		this.portletType = portletType; 
-		this.setDataSource(dataSource);
+		this.dataSource = dataSource;
 		this.portletKey = portletKey;
 		this.portletTitle = portletTitle;
 		this.portletWidth = portletWidth;

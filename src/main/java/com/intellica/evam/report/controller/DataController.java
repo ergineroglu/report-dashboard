@@ -60,6 +60,9 @@ public class DataController {
 			case LINE_CHART:
 				responseList = portlet.getDataSource().getData2D();
 				break;
+			case MULTISERIES_LINE_CHART:
+				responseList = portlet.getDataSource().getData3D();
+				break;
 			default:
 				break;
 			}

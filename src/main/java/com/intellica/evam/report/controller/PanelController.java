@@ -34,6 +34,7 @@ import org.xml.sax.SAXException;
 import com.intellica.evam.report.model.ConstantDataSource;
 import com.intellica.evam.report.model.DashboardAreaChartPortlet;
 import com.intellica.evam.report.model.DashboardLineChartPortlet;
+import com.intellica.evam.report.model.DashboardMultiseriesLineChartPortlet;
 import com.intellica.evam.report.model.DashboardPortlet;
 import com.intellica.evam.report.model.DashboardTab;
 import com.intellica.evam.report.model.DashboardTextboxPortlet;
@@ -142,6 +143,7 @@ public class PanelController {
 		DashboardPortlet portlet = this.portletFactory(portletType, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 		switch(portletType) {
 		case LINE_CHART:
+		case MULTISERIES_LINE_CHART:
 		case AREA_CHART:
 			DashboardLineChartPortlet lineChart = (DashboardLineChartPortlet) portlet;
 			// optional fields			
@@ -171,7 +173,8 @@ public class PanelController {
 		switch (portletType) {
 		case TEXT_BOX: return new DashboardTextboxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval);
 		case LINE_CHART: return new DashboardLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
-		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+		case MULTISERIES_LINE_CHART: return new DashboardMultiseriesLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);		
 		default: return null;
 		}
 	}

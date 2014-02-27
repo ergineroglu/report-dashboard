@@ -52,6 +52,75 @@
 		</portlet>
 		
 		<portlet>
+			<key>scenario_values</key>
+			<title>Evam Scenarios Brush String</title>
+			<type>areachart</type>
+			<width>100</width>
+			<brush>true</brush>			
+			<x-value-type>string</x-value-type>			
+			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>A Event;500</value>
+					<value>B Event;406.7</value>
+					<value>C Event;195</value>
+					<value>D Event;643</value>
+					<value>E Event;490</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_multiseries</key>
+			<title>Multi Series Line Chart</title>
+			<type>multiserieslinechart</type>
+			<width>65</width>			
+			<x-value-type>time</x-value-type>	
+			<x-value-format>%d.%m.%Y</x-value-format>		
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>20.01.2014; 100; Oracle</value>
+					<value>21.01.2014; 300; Oracle</value>
+					<value>22.01.2014; 150; Oracle</value>
+					<value>24.01.2014; 230; Oracle</value>
+					<value>23.01.2014; 205; Oracle</value>
+					
+					<value>20.01.2014; 305; PostgreSQL</value>
+					<value>21.01.2014; 90; PostgreSQL</value>
+					<value>22.01.2014; 270; PostgreSQL</value>
+					<value>24.01.2014; 140; PostgreSQL</value>
+					<value>23.01.2014; 135; PostgreSQL</value>
+					
+					<value>20.01.2014; 155; MySQL</value>
+					<value>21.01.2014; 291; MySQL</value>
+					<value>22.01.2014; 106; MySQL</value>
+					<value>24.01.2014; 239; MySQL</value>
+					<value>23.01.2014; 199; MySQL</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_multiseries2</key>
+			<title>Multi Series Line Chart DB</title>
+			<type>multiserieslinechart</type>
+			<width>100</width>			
+			<x-value-type>string</x-value-type>	
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>database</type>
+				<query>select tag, count(*), category from hurriyet_s01_table group by category, tag order by category, tag</query>
+			</data-source>
+		</portlet>
+		
+		<portlet>
 			<key>scenario_values_brush_xx</key>
 			<title>Evam Scenarios</title>
 			<type>areachart</type>

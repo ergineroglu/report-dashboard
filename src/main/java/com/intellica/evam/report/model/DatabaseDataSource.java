@@ -41,4 +41,19 @@ public class DatabaseDataSource implements DataSource {
 		return this.rdbmsDAO.<String, String>executeQuery2D(this.queryTemplate);
 	}
 
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData3D()
+	 */
+	@Override
+	public List<? extends GraphData> getData3D() {
+		return this.getData3D(new HashMap<String, String>());
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData2D(java.util.Map)
+	 */
+	@Override
+	public List<? extends GraphData> getData3D(Map<String, String> parameters) {
+		return this.rdbmsDAO.<String, String, String>executeQuery3D(this.queryTemplate);
+	}
 }

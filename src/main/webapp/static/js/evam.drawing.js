@@ -43,13 +43,17 @@ evam.selectDomainExtentFormat = function(type, marginRatio) {
 	switch(type) {
 	case 'string':
 	default:
-		return function(data) {return data;};
+		return function(data) {newData = [""]; newData.push.apply(newData, data); return newData;};
 	case 'time':	
-		return function(data) {return d3.extent(data);};		
+		return function(data) { 
+			var extent = d3.extent(data);
+			var margin = ((extent[1].getTime() - extent[0].getTime()) * (marginRatio || 0));
+			return [new Date(extent[0].getTime() - margin), new Date(extent[1].getTime() + margin)]; 
+		};		
 	case 'number':
 		return function(data) { 
 			var extent = d3.extent(data);
-			var margin = ((extent[1] - extent[0]) * (marginRatio || 0.1));
+			var margin = ((extent[1] - extent[0]) * (marginRatio || 0));
 			return [extent[0] - margin, extent[1] + margin]; 
 		};
 	}
@@ -98,6 +102,7 @@ evam.Graph = function(options){
 	this.updateTimerId		= null;
 };
 evam.Graph.prototype.initialize = function() {};
+evam.Graph.prototype.prepareData = function(data) {};
 evam.Graph.prototype.draw = function(data) {};
 evam.Graph.prototype.update = function() {
 	var chart = this;
@@ -110,6 +115,7 @@ evam.Graph.prototype.update = function() {
 		if (error) console.warn(error);
 		else {
 			try {
+				chart.prepareData(data);
 				chart.draw(data);
 			}
 			catch(err) {
@@ -168,8 +174,8 @@ evam.Linechart = function(options){
 	this.interpolate		= options.interpolate || 'linear';
 	this.hasBrush			= options.brush;
 	if(this.hasBrush) {
-		this.margin 		= {top: 5, right: 10, bottom: 100, left: 45};
-		this.margin2 		= {top: 430, right: 10, bottom: 20, left: 45};
+		this.margin 		= {top: 5, right: 20, bottom: 100, left: 45};
+		this.margin2 		= {top: 430, right: 20, bottom: 20, left: 45};
 		this.width 			= this.outerWidth - this.margin.left - this.margin.right;
 		this.height 		= this.outerHeight - this.margin.top - this.margin.bottom;
 		this.height2 		= this.outerHeight - this.margin2.top - this.margin2.bottom;
@@ -193,8 +199,16 @@ evam.Linechart.prototype.initialize = function() {
 										   .x(function(d) { return lineChart.x2(d.x); })
 		   								   .y(function(d) { return lineChart.y2(d.y); });
 		this.brushed 		= function() {
-			lineChart.x.domain(lineChart.brush.empty() ? lineChart.x2.domain() : lineChart.brush.extent());	
-			lineChart.focus.select(".area").attr("d", lineChart.area);
+			if(lineChart.xAxisType == "string") {
+				var startPos = lineChart.x2.domain().indexOf(lineChart.brush.extent()[0]) - 1;
+				var endPos = lineChart.brush.extent()[1] ? lineChart.x2.domain().indexOf(lineChart.brush.extent()[1]) : lineChart.x2.domain().length;
+				lineChart.x.domain(lineChart.brush.empty() ? lineChart.x2.domain() : lineChart.x2.domain().slice(startPos, endPos));
+			}
+			else {
+				lineChart.x.domain(lineChart.brush.empty() ? lineChart.x2.domain() : lineChart.brush.extent());
+			}
+			
+			//lineChart.focus.select(".area").attr("d", lineChart.area);
 			lineChart.focus.select(".line").attr("d", lineChart.line);
 			lineChart.focus.select(".x.axis").call(lineChart.xAxis);
 		};
@@ -203,7 +217,7 @@ evam.Linechart.prototype.initialize = function() {
 		this.svg.append("clipPath").attr("id", "clip_" + this.key).append("rect").attr("width", this.width).attr("height", this.height);
 	}
 };
-evam.Linechart.prototype.draw = function(data) { 	
+evam.Linechart.prototype.prepareData = function(data) {
 	var lineChart = this;
 	// parse & sort data
 	data.forEach(function(d) {
@@ -211,6 +225,9 @@ evam.Linechart.prototype.draw = function(data) {
 	    d.y = lineChart.parseY(d.y);
 	});	
 	data.sort(function(a, b){ return d3.ascending(a.x, b.x); });
+};
+evam.Linechart.prototype.draw = function(data) { 	
+	var lineChart = this;	
 	// domains
 	lineChart.x.domain(lineChart.domainX(data.map(function(d) { return d.x; })));	
 	lineChart.y.domain(lineChart.domainY(data.map(function(d) { return d.y; })));
@@ -245,9 +262,8 @@ evam.Linechart.prototype.draw = function(data) {
         highlight.attr("transform", "translate(" + lineChart.x(d.x) + "," + lineChart.y(d.y) + ")");
 	    var text = highlight.select("text");
 	    text.text(lineChart.xAxisTitle + ": " + d.x + " " + lineChart.yAxisTitle + ": " + d.y);		    
-	    if(mouseX > (lineChart.width - 75)) {text.style("text-anchor", "end").attr("x", -12).attr("y", 3);}
-	    else if(mouseX < 75) {text.style("text-anchor", "start").attr("x", 12).attr("y", 3);}
-	    else {text.style("text-anchor", "middle").attr("x", 0).attr("y", -12);}
+	    if(mouseX < (lineChart.width / 2)) {text.style("text-anchor", "start").attr("x", 12).attr("y", 3);}
+	    else {text.style("text-anchor", "end").attr("x", -12).attr("y", 3);} 	    
 	};
 	// highlight object for point information
 	var highlight = lineChart.focus.append("g").attr("class", "highlight").style("display", "none");
@@ -257,6 +273,67 @@ evam.Linechart.prototype.draw = function(data) {
        		       .on("mouseover", function() { highlight.style("display", null); })
    			       .on("mouseout", function() { highlight.style("display", "none"); })
    			       .on("mousemove", mousemove);	
+};
+
+// Multi Series Line Chart
+evam.MultiSeriesLinechart = function(options){ 	
+	evam.Linechart.call(this, options);	
+}; 
+evam.MultiSeriesLinechart.prototype = Object.create(evam.Linechart.prototype);
+evam.MultiSeriesLinechart.prototype.initialize = function() { 
+	evam.Linechart.prototype.initialize.call(this);
+	var multiSeriesChart	= this;
+	this.color				= d3.scale.category10();
+	if(this.hasBrush) {
+		this.brushed 		= function() {
+			multiSeriesChart.x.domain(multiSeriesChart.brush.empty() ? multiSeriesChart.x2.domain() : multiSeriesChart.brush.extent());				
+			multiSeriesChart.focus.selectAll(".lineSerie").select(".line").attr("d", function(d) {return multiSeriesChart.line(d.values); });
+			multiSeriesChart.focus.select(".x.axis").call(multiSeriesChart.xAxis);	
+		};		
+		multiSeriesChart.brush.on("brush", multiSeriesChart.brushed);
+	}
+};
+evam.MultiSeriesLinechart.prototype.prepareData = function(data) {
+	var multiSeriesChart	 = this;
+	// parse data
+	data.forEach(function(d) {
+		d.x = multiSeriesChart.parseX(d.x);
+	    d.y = multiSeriesChart.parseY(d.y);
+	});		
+};
+evam.MultiSeriesLinechart.prototype.draw = function(data) { 	
+	evam.Linechart.prototype.draw.call(this, data);
+	var multiSeriesChart	 = this;
+	// find keys and categorize data	
+	var categoriedData = d3.nest().key(function(d) { return d.z; })
+						   .sortValues(function(a,b) { return d3.ascending(a.x, b.x); }).entries(data);
+	multiSeriesChart.color.domain(categoriedData.map(function(d) { return d.key; }));
+	// remove lines drawn by linechart
+	multiSeriesChart.focus.select("path").remove();
+	multiSeriesChart.focus.select(".highlight").remove();
+	multiSeriesChart.mousemove = null;
+	if(multiSeriesChart.hasBrush) {
+		multiSeriesChart.context.select("path").remove();
+	}	
+	// add line series
+	var lineSerie = multiSeriesChart.focus.selectAll(".lineSerie").data(categoriedData).enter()
+									.append("g").attr("class", "lineSerie");
+	
+	lineSerie.append("path").attr("class", "line").attr("clip-path", "url(#clip_" + multiSeriesChart.key + ")")
+			 .attr("d", function(d) { return multiSeriesChart.line(d.values); })
+			 .attr("data-legend", function(d) { return d.key; })
+			 .style("stroke", function(d) { return multiSeriesChart.color(d.key); });	
+	if(multiSeriesChart.hasBrush) {
+		var lineSerieContext = multiSeriesChart.context.selectAll(".lineSerie").data(categoriedData).enter()
+									    	   .append("g").attr("class", "lineSerie");
+
+		lineSerieContext.append("path").attr("class", "line").attr("clip-path", "url(#clip_" + multiSeriesChart.key + ")")
+					    .attr("d", function(d) { return multiSeriesChart.line2(d.values);})
+					    .style("stroke", function(d) { return multiSeriesChart.color(d.key); });
+	}
+	// create legend
+	var legend = multiSeriesChart.svg.append("g").attr("class","legend").style("font-size", "12px").call(d3.legend);
+	legend.attr("transform","translate(" + (multiSeriesChart.width + multiSeriesChart.margin.left - legend.select("rect.legend-box").attr('width')) + "," + (multiSeriesChart.margin.top + 20) + ")");
 };
 
 // Area Chart

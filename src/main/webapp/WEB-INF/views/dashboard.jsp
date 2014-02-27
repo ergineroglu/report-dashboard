@@ -125,6 +125,26 @@
 													 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
 												</div>
 											</c:if>
+											
+											<c:if test="${dashboardPortlet.value.portletType.name == 'multiserieslinechart'}">
+												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
+												<div id="evam_drawing_${dashboardPortlet.key}" 
+													 class="evam_graph multiserieslinechart"
+													 data-title="${dashboardPortlet.value.portletTitle}"
+													 data-key="${dashboardPortlet.key}"
+													 data-type="${dashboardPortlet.value.portletType.name}"
+													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}"
+													 data-request-url="${dashboardPortletUrl}"
+													 data-x-axis="${dashboardPortlet.value.axisXName}"
+													 data-y-axis="${dashboardPortlet.value.axisYName}"
+													 data-x-axis-type="${dashboardPortlet.value.axisXType}"
+													 data-y-axis-type="${dashboardPortlet.value.axisYType}"
+													 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
+													 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
+													 data-brush="${dashboardPortlet.value.brush}"													 
+													 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
+												</div>
+											</c:if>
 										</div>
             						</div>
           						</div>
@@ -146,6 +166,7 @@
 	<script type="text/javascript" src="<c:url value="/static/js/bootstrap-typeahead.js" />"></script>	
 	<script type="text/javascript" src="<c:url value="/static/js/bootbox.min.js" />"></script>
 	<script type="text/javascript" src="<c:url value="/static/js/d3.v3.js" />"></script>
+	<script type="text/javascript" src="<c:url value="/static/js/d3.legend.js" />"></script>	
 	<script type="text/javascript" src="<c:url value="/static/js/evam.drawing.js" />"></script>
 
 	<script type="text/javascript">
@@ -194,6 +215,27 @@
    			   		interpolate: $(this).data('interpolate')
 				};
 				var chart = new evam.Areachart(options);
+				chart.initialize();
+				chart.update();	
+				$(this).bind('evam.resize', function() { chart.resize(); });
+				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
+			});
+			$(".evam_graph.multiserieslinechart").each(function() {
+				var options = {
+					key: $(this).data('key'), 
+					title: $(this).data('title'), 
+					refreshInterval: $(this).data('refresh-interval'),
+					requestUrl: $(this).data('request-url'),
+   			   	   	xAxis: $(this).data('x-axis'), 
+   			   	   	yAxis: $(this).data('y-axis'), 
+   			   		xAxisType: $(this).data('x-axis-type'), 
+		   	   		yAxisType: $(this).data('y-axis-type'),
+		   	 		xAxisFormat: $(this).data('x-axis-format'), 
+		   	   		yAxisFormat: $(this).data('y-axis-format'), 
+		   	   		brush: $(this).data('brush'),
+   			   		interpolate: $(this).data('interpolate')
+				};
+				var chart = new evam.MultiSeriesLinechart(options);
 				chart.initialize();
 				chart.update();	
 				$(this).bind('evam.resize', function() { chart.resize(); });
