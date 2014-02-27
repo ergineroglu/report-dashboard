@@ -43,7 +43,7 @@ evam.selectDomainExtentFormat = function(type, marginRatio) {
 	switch(type) {
 	case 'string':
 	default:
-		return function(data) {newData = [""]; newData.push.apply(newData, data); return newData;};
+		return function(data) {return data;};
 	case 'time':	
 		return function(data) { 
 			var extent = d3.extent(data);
@@ -202,13 +202,21 @@ evam.Linechart.prototype.initialize = function() {
 			if(lineChart.xAxisType == "string") {
 				var startPos = lineChart.x2.domain().indexOf(lineChart.brush.extent()[0]) - 1;
 				var endPos = lineChart.brush.extent()[1] ? lineChart.x2.domain().indexOf(lineChart.brush.extent()[1]) : lineChart.x2.domain().length;
-				lineChart.x.domain(lineChart.brush.empty() ? lineChart.x2.domain() : lineChart.x2.domain().slice(startPos, endPos));
+				if(lineChart.brush.empty()) {
+					lineChart.x.domain(lineChart.x2.domain());
+					startPos = 0;
+					endPos =  lineChart.x2.domain().length;
+				}
+				else {
+					lineChart.x.domain(lineChart.x2.domain().slice(startPos, endPos));
+				}						
+				lineChart.focus.select(".line").datum(lineChart.context.select(".line").datum().slice(startPos, endPos));
+				lineChart.focus.select(".area").datum(lineChart.context.select(".area").datum().slice(startPos, endPos));
 			}
 			else {
 				lineChart.x.domain(lineChart.brush.empty() ? lineChart.x2.domain() : lineChart.brush.extent());
 			}
-			
-			//lineChart.focus.select(".area").attr("d", lineChart.area);
+			lineChart.focus.select(".area").attr("d", lineChart.area);
 			lineChart.focus.select(".line").attr("d", lineChart.line);
 			lineChart.focus.select(".x.axis").call(lineChart.xAxis);
 		};
@@ -286,7 +294,30 @@ evam.MultiSeriesLinechart.prototype.initialize = function() {
 	this.color				= d3.scale.category10();
 	if(this.hasBrush) {
 		this.brushed 		= function() {
-			multiSeriesChart.x.domain(multiSeriesChart.brush.empty() ? multiSeriesChart.x2.domain() : multiSeriesChart.brush.extent());				
+			if(multiSeriesChart.xAxisType == "string") {
+				var startPos = multiSeriesChart.x2.domain().indexOf(multiSeriesChart.brush.extent()[0]) - 1;
+				var endPos = multiSeriesChart.brush.extent()[1] ? multiSeriesChart.x2.domain().indexOf(multiSeriesChart.brush.extent()[1]) : multiSeriesChart.x2.domain().length;
+				if(multiSeriesChart.brush.empty()) {
+					multiSeriesChart.x.domain(multiSeriesChart.x2.domain());
+					startPos = 0;
+					endPos =  multiSeriesChart.x2.domain().length;
+				}
+				else {
+					multiSeriesChart.x.domain(multiSeriesChart.x2.domain().slice(startPos, endPos));
+				}								
+				var categoriedData = [];
+				multiSeriesChart.context.selectAll(".lineSerie").each(function(data, i) {
+					var newData = {
+						key: data.key,
+						values: data.values.slice(startPos, endPos)
+					};
+					categoriedData.push(newData);
+				});
+				multiSeriesChart.focus.selectAll(".lineSerie").data(categoriedData);
+			}
+			else {
+				multiSeriesChart.x.domain(multiSeriesChart.brush.empty() ? multiSeriesChart.x2.domain() : multiSeriesChart.brush.extent());
+			}				
 			multiSeriesChart.focus.selectAll(".lineSerie").select(".line").attr("d", function(d) {return multiSeriesChart.line(d.values); });
 			multiSeriesChart.focus.select(".x.axis").call(multiSeriesChart.xAxis);	
 		};		
