@@ -1,5 +1,4 @@
-.evam_graph.areachart,
-.evam_graph.areachartbrush {
+.evam_graph {
 	font: 10px sans-serif;	
 }
 
@@ -9,28 +8,63 @@
 	stroke: #000;
 	shape-rendering: crispEdges;
 }
+
+.evam_graph .axis .tick line {
+  	stroke: #bbb;
+  	stroke-opacity: .75;
+}
 	
-.evam_graph.areachart .area, 
-.evam_graph.areachartbrush .area {
+.evam_graph.areachart path.area, 
+.evam_graph.areachartbrush path.area {
 	fill: steelblue;
 }
 
-.evam_graph.areachartbrush .area {	
-	clip-path: url(#clip);
+.evam_graph.linechart path.line,
+.evam_graph.multiserieslinechart path.line,
+.evam_graph.areachart path.line {  	
+  	fill: none;
+  	stroke: darkblue;
+  	stroke-width: 1.2px;  	
 }
 
-.evam_graph.areachart .focus circle {
+.evam_graph.linechart .highlight circle,
+.evam_graph.multiserieslinechart .highlight circle,
+.evam_graph.areachart .highlight circle {
 	fill: none;
 	stroke: red;
 }
-	
+
+.evam_graph.linechart .overlay,
+.evam_graph.multiserieslinechart .overlay,
 .evam_graph.areachart .overlay {
  	fill: none;
   	pointer-events: all;
 }
 
-.evam_graph.areachartbrush .brush .extent {
+.evam_graph.linechart .brush .extent,
+.evam_graph.multiserieslinechart .brush .extent,
+.evam_graph.areachart .brush .extent {
   	stroke: #fff;
   	fill-opacity: .250;
   	shape-rendering: crispEdges;
+}
+
+.evam_graph.multiserieslinechart .legend rect {
+	fill: #eee;
+  	stroke: black;
+  	opacity: 0.6;
+}
+
+.evam_graph.piechart .arc text,
+.evam_graph.donutchart .arc text {
+	text-anchor: middle;
+	font-weight: bold;
+	font-size: 12px;
+}
+
+.evam_graph.piechart .focus text,
+.evam_graph.donutchart .focus text {
+	font-size: 15px;
+	font-weight: bold;
+	text-anchor: middle;
 }

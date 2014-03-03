@@ -5,31 +5,30 @@
 		<title>Scenario View</title>
 		
 		<portlet>
-			<key>scenario_values3</key>
-			<title>Evam Scenarios</title>
-			<type>donutchart</type>
-			<width>100</width>
-		</portlet>
-		
-		<portlet>
-			<key>scenario_values2</key>
-			<title>Evam Scenarios</title>
-			<type>piechart</type>
-			<width>100</width>
-		</portlet>
-		
-		<portlet>
 			<key>scenario_name</key>
 			<title>Evam Scenarios</title>
 			<type>textbox</type>
-			<span>10</span>
+			<width>40</width>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
 		</portlet>
 		
 		<portlet>
-			<key>scenario_name2</key>
+			<key>scenario_values3</key>
 			<title>Evam Scenarios</title>
-			<type>textbox</type>
-			<span>10</span>
+			<type>areachart</type>
+			<width>50</width>
+			<x-axis>Event Time</x-axis>
+			<y-axis>Event Count</y-axis>
+			<x-value-type>time</x-value-type> <!-- Olası değerler: string, time, number -->
+			<x-value-format>%d.%m.%Y</x-value-format>
+			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
 		</portlet>
 		
 		<portlet>
@@ -37,21 +36,244 @@
 			<title>Evam Scenarios</title>
 			<type>areachart</type>
 			<width>65</width>
+			<refreshInterval>120</refreshInterval>
+			<x-value-type>string</x-value-type>			
+			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>A Event;500</value>
+					<value>B Event;406.7</value>
+					<value>C Event;195</value>
+					<value>D Event;643</value>
+					<value>E Event;490</value>
+				</values>
+			</data-source>
 		</portlet>
 		
 		<portlet>
-			<key>scenario_values_brush</key>
-			<title>Evam Scenarios</title>
-			<type>areachartbrush</type>
+			<key>scenario_values</key>
+			<title>Evam Scenarios Brush String</title>
+			<type>areachart</type>
 			<width>100</width>
+			<brush>true</brush>			
+			<x-value-type>string</x-value-type>			
+			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>A Event;500</value>
+					<value>B Event;406.7</value>
+					<value>C Event;195</value>
+					<value>D Event;643</value>
+					<value>E Event;490</value>
+				</values>
+			</data-source>
 		</portlet>
 		
 		<portlet>
-			<key>scenario_name4</key>
-			<title>Evam Scenarios</title>
-			<type>textbox</type>
-			<span>10</span>
+			<key>scenario_values_multiseries</key>
+			<title>Multi Series Line Chart</title>
+			<type>multiserieslinechart</type>
+			<width>65</width>			
+			<x-value-type>time</x-value-type>	
+			<x-value-format>%d.%m.%Y</x-value-format>		
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>20.01.2014; 100; Oracle</value>
+					<value>21.01.2014; 300; Oracle</value>
+					<value>22.01.2014; 150; Oracle</value>
+					<value>24.01.2014; 230; Oracle</value>
+					<value>23.01.2014; 205; Oracle</value>
+					
+					<value>20.01.2014; 305; PostgreSQL</value>
+					<value>21.01.2014; 90; PostgreSQL</value>
+					<value>22.01.2014; 270; PostgreSQL</value>
+					<value>24.01.2014; 140; PostgreSQL</value>
+					<value>23.01.2014; 135; PostgreSQL</value>
+					
+					<value>20.01.2014; 155; MySQL</value>
+					<value>21.01.2014; 291; MySQL</value>
+					<value>22.01.2014; 106; MySQL</value>
+					<value>24.01.2014; 239; MySQL</value>
+					<value>23.01.2014; 199; MySQL</value>
+				</values>
+			</data-source>
 		</portlet>
+		
+		<portlet>
+			<key>scenario_values_multiseries2</key>
+			<title>Multi Series Line Chart DB</title>
+			<type>multiserieslinechart</type>
+			<width>100</width>			
+			<x-value-type>string</x-value-type>	
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>database</type>
+				<query>select tag, count(*), category from hurriyet_s01_table group by category, tag order by category, tag</query>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_brush_xx</key>
+			<title>Evam Scenarios</title>
+			<type>areachart</type>
+			<width>100</width>
+			<brush>true</brush>
+			<x-value-type>number</x-value-type>			
+			<y-value-type>time</y-value-type> 
+			<y-value-format>%d.%m.%Y</y-value-format>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>100; 20.01.2014</value>
+					<value>300; 21.01.2014</value>
+					<value>200; 22.01.2014</value>
+					<value>400; 19.01.2014</value>
+					<value>700; 31.01.2014</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_brush_yy</key>
+			<title>Evam Scenarios</title>
+			<type>areachart</type>
+			<width>100</width>
+			<brush>true</brush>
+			<x-value-type>time</x-value-type>
+			<x-value-format>%d.%m.%Y</x-value-format>		
+			<y-value-type>string</y-value-type> 
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>20.01.2014; A Event</value>
+					<value>21.01.2014; B Event</value>
+					<value>22.01.2014; C Event</value>
+					<value>19.01.2014; E Event</value>
+					<value>31.01.2014; H Event</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_line</key>
+			<title>Line Chart</title>
+			<type>linechart</type>
+			<width>80</width>
+			<x-value-type>time</x-value-type> <!-- Olası değerler: string, time, number -->
+			<x-value-format>%d.%m.%Y</x-value-format>
+			<y-value-type>number</y-value-type> 
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_line2</key>
+			<title>Line Chart With Brush</title>
+			<type>linechart</type>
+			<width>100</width>
+			<interpolationMethod>monotone</interpolationMethod>
+			<brush>true</brush>
+			<x-value-type>time</x-value-type> <!-- Olası değerler: string, time, number -->
+			<x-value-format>%d.%m.%Y</x-value-format>
+			<y-value-type>number</y-value-type>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_donut</key>
+			<title>Evam Scenarios Donut</title>
+			<type>donutchart</type>
+			<width>50</width>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>20.01.2014; 500</value>
+					<value>21.01.2014; 300</value>
+					<value>22.01.2014; 200.4</value>
+					<value>19.01.2014; 325</value>
+					<value>31.01.2014; 195</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_piechart</key>
+			<title>Evam Scenarios Pie</title>
+			<type>piechart</type>
+			<width>50</width>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>,</delimiter>
+					<value>A Event, 6</value>
+					<value>B Event, 16900</value>
+					<value>C Event, 490</value>
+					<value>D Event, 190</value>
+					<value>E Event, 3195.45</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_piechart2</key>
+			<title>Evam Scenarios Pie DB</title>
+			<type>piechart</type>
+			<width>33</width>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_piechart3</key>
+			<title>Evam Scenarios Pie Small</title>
+			<type>piechart</type>
+			<width>25</width>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>,</delimiter>
+					<value>A Event, 4009</value>
+					<value>B Event, 16900</value>
+					<value>C Event, 490</value>
+					<value>D Event, 190</value>
+					<value>E Event, 3195.45</value>
+					<value>F Event, 895.45</value>
+					<value>H Event, 1777</value>
+					<value>G Event Very Long Text ASD, 612</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_donut2</key>
+			<title>Evam Scenarios Donut DB</title>
+			<type>donutchart</type>
+			<width>40</width>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+			</data-source>
+		</portlet>
+		
 <!-- 		<portlet> -->
 <!-- 			<key>scenario_state_dist</key> -->
 <!-- 			<title>Selected Scenario State Distribution</title> -->

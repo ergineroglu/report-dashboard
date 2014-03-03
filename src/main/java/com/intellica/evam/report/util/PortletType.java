@@ -10,8 +10,9 @@ public enum PortletType {
 	TEXT_BOX("textbox"),
 	SELECT_BOX("selectbox"),
 	RADIO_BUTTON("radiobutton"),
+	LINE_CHART("linechart"),
+	MULTISERIES_LINE_CHART("multiserieslinechart"),
 	AREA_CHART("areachart"),
-	AREA_CHART_BRUSH("areachartbrush"),
 	DONUT_CHART("donutchart"),
 	PIE_CHART("piechart");
 	

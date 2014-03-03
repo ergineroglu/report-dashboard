@@ -19,259 +19,451 @@ evam.pieChartTextAngle = function(angle, offset) {
 	var a = angle * 180 / Math.PI + offset;
 	return 	0 < a && a < 180 ? a - 90 : 180 < a && a < 270 ? a + 90 : -90 < a && a < 0 ? a + 90 : a;
 };
+evam.selectParseFormat = function(type, extraFormat) {
+	switch(type) {
+	case 'string':
+	default:
+		return function(x) {return x;};
+	case 'number':
+		return function(x) {return +x;};
+	case 'time':
+		return d3.time.format(extraFormat).parse;
+	}
+};
+evam.selectScaleFormat = function(type, range) {
+	switch(type) {
+	case 'string':
+	default:
+		var ordinal_scale = d3.scale.ordinal().rangePoints(range);
+		ordinal_scale.invert = function(e) {
+			var d = this.domain();
+	        var r = this.range(); 
+	        return d[d3.bisect(r, e)];
+		};
+		return ordinal_scale;
+	case 'number':
+		return d3.scale.linear().range(range);
+	case 'time':
+		return d3.time.scale().range(range);
+	}
+};
+evam.selectDomainExtentFormat = function(type, marginRatio) {
+	switch(type) {
+	case 'string':
+	default:
+		return function(data) {return data;};
+	case 'time':	
+		return function(data) { 
+			var extent = d3.extent(data);
+			var margin = ((extent[1].getTime() - extent[0].getTime()) * (marginRatio || 0));
+			return [new Date(extent[0].getTime() - margin), new Date(extent[1].getTime() + margin)]; 
+		};		
+	case 'number':
+		return function(data) { 
+			var extent = d3.extent(data);
+			var margin = ((extent[1] - extent[0]) * (marginRatio || 0));
+			return [extent[0] - margin, extent[1] + margin]; 
+		};
+	}
+};
+evam.selectAxisTickFormat = function(type) {
+	switch(type) {
+	case 'string':
+	default:
+		return function(data, i) {return data;};
+	case 'time':	
+		return evam.customTimeFormat;		
+	case 'number':
+		return d3.format("s");
+	}
+};
+evam.spinnerOptions = {
+	lines: 13, // The number of lines to draw
+	length: 30, // The length of each line
+	width: 10, // The line thickness
+	radius: 25, // The radius of the inner circle
+	corners: 1, // Corner roundness (0..1)
+	rotate: 0, // The rotation offset
+	direction: 1, // 1: clockwise, -1: counterclockwise
+	color: '#000', // #rgb or #rrggbb or array of colors
+	speed: 0.8, // Rounds per second
+	trail: 40, // Afterglow percentage
+	shadow: false, // Whether to render a shadow
+	hwaccel: false, // Whether to use hardware acceleration
+	className: 'spinner', // The CSS class to assign to the spinner
+	zIndex: 2e9, // The z-index (defaults to 2000000000)
+	top: 'auto', // Top position relative to parent in px
+	left: 'auto' // Left position relative to parent in px
+};
 
 // Graph 
-evam.Graph = function(key, title, xAxis, yAxis, requestUrl, requestData){ 
-	this.key				= key;
-	this.title				= title;
-	this.xAxisTitle			= xAxis;
-	this.yAxisTitle			= yAxis;
-	this.jqueryObject		= $("#evam_drawing_" + key);	
-	this.outerWidth			= this.jqueryObject.width();
-	this.outerHeight		= this.jqueryObject.height();
-	this.requestUrl			= requestUrl;
-	this.requestData		= requestData;	
+evam.Graph = function(options){ 
+	this.key				= options.key;
+	this.title				= options.title;
+	this.refreshInterval	= options.refreshInterval || -1;
+	this.parentObject		= $("#evam_drawing_" + options.key);	
+	this.outerWidth			= this.parentObject.width();
+	this.outerHeight		= this.parentObject.height();
+	this.requestUrl			= options.requestUrl;
+	this.requestData		= options.requestData || {};	
+	this.spinner			= new Spinner(evam.spinnerOptions);	
+	this.updateTimerId		= null;
 };
-evam.Graph.prototype.initialize = function() { 
-	
+evam.Graph.prototype.initialize = function() {};
+evam.Graph.prototype.prepareData = function(data) {};
+evam.Graph.prototype.draw = function(data) {};
+evam.Graph.prototype.update = function() {
+	var chart = this;
+	// remove timer
+	window.clearTimeout(chart.updateTimerId);
+	chart.updateTimerId = null;
+	// start request
+	chart.startSpinner();
+	d3.json(chart.requestUrl, function(error, data) {
+		if (error) console.warn(error);
+		else {
+			try {
+				chart.prepareData(data);
+				chart.draw(data);
+			}
+			catch(err) {
+				console.error(err);
+			}
+		}		
+		chart.stopSpinner();
+		if(chart.refreshInterval > 0) {		
+			chart.updateTimerId = setTimeout(function(){ chart.update(); }, chart.refreshInterval * 1000);
+		}
+	})
+	.header("Content-Type","application/x-www-form-urlencoded")
+    .send("POST");
 };
-evam.Graph.prototype.draw = function() { 
+evam.Graph.prototype.startSpinner = function() {
+	this.spinner.spin(this.parentObject[0]);
+};
+evam.Graph.prototype.stopSpinner = function() {
+	this.spinner.stop();
+};
+evam.Graph.prototype.resize = function() {
+	var targetWidth = this.parentObject.width();    
+    this.parentObject.children('svg').attr("width", targetWidth);	
+};
+
+// X-Y Chart
+evam.XYchart = function(options){ 
+	evam.Graph.call(this, options);	
+	this.xAxisTitle			= options.xAxis || 'X';
+	this.yAxisTitle			= options.yAxis || 'Y';
+	this.xAxisType			= options.xAxisType;
+	this.yAxisType			= options.yAxisType;
+	this.parseX				= evam.selectParseFormat(options.xAxisType, options.xAxisFormat);
+	this.parseY				= evam.selectParseFormat(options.yAxisType, options.yAxisFormat);
+	this.domainX			= evam.selectDomainExtentFormat(options.xAxisType);
+	this.domainY			= evam.selectDomainExtentFormat(options.yAxisType, 0.1);
+	this.tickFormatX		= evam.selectAxisTickFormat(options.xAxisType);
+	this.tickFormatY		= evam.selectAxisTickFormat(options.yAxisType);
+	this.outerHeight		= options.height || 500;
+	this.margin 			= {top: 10, right: 20, bottom: 20, left: 45};
+	this.width 				= this.outerWidth - this.margin.left - this.margin.right;
+    this.height 			= this.outerHeight - this.margin.top - this.margin.bottom;    
+    this.bisectY 			= d3.bisector(function(d) { return d.x; }).left;   
+};
+evam.XYchart.prototype = Object.create(evam.Graph.prototype);
+evam.XYchart.prototype.initialize = function() { 
+	this.x 					= evam.selectScaleFormat(this.xAxisType, [0, this.width]);
+	this.y 					= evam.selectScaleFormat(this.yAxisType, [this.height, 0]);
+	this.xAxis 				= d3.svg.axis().scale(this.x).orient("bottom").tickSize(-this.height).tickPadding(10).tickFormat(this.tickFormatX).tickSubdivide(true);
+	this.yAxis 				= d3.svg.axis().scale(this.y).orient("left").tickSize(-this.width).tickFormat(this.tickFormatY).tickSubdivide(true);
+};
+
+// Line Chart
+evam.Linechart = function(options){ 
+	evam.XYchart.call(this, options);
+	this.interpolate		= options.interpolate || 'linear';
+	this.hasBrush			= options.brush;
+	if(this.hasBrush) {
+		this.margin 		= {top: 5, right: 20, bottom: 100, left: 45};
+		this.margin2 		= {top: 430, right: 20, bottom: 20, left: 45};
+		this.width 			= this.outerWidth - this.margin.left - this.margin.right;
+		this.height 		= this.outerHeight - this.margin.top - this.margin.bottom;
+		this.height2 		= this.outerHeight - this.margin2.top - this.margin2.bottom;
+	}
+}; 
+evam.Linechart.prototype = Object.create(evam.XYchart.prototype);
+evam.Linechart.prototype.initialize = function() { 
+	evam.XYchart.prototype.initialize.call(this);
+	var lineChart 			= this;
+	this.line 				= d3.svg.line().interpolate(lineChart.interpolate)
+										   .x(function(d) { return lineChart.x(d.x); })
+	   									   .y(function(d) { return lineChart.y(d.y); });
+	this.svg 				= d3.select(this.parentObject[0]).append("svg").attr("width", this.outerWidth).attr("height", this.outerHeight)
+								.attr("viewBox", "0 0 " + this.outerWidth + " " + this.outerHeight).attr("preserveAspectRatio", "xMidYMid");
+	this.focus 				= this.svg.append("g").attr("class", "focus").attr("transform", "translate(" + lineChart.margin.left + "," + lineChart.margin.top + ")");
+	if(this.hasBrush) {
+		this.x2 			= evam.selectScaleFormat(this.xAxisType, [0, this.width]);
+		this.y2 			= evam.selectScaleFormat(this.yAxisType, [this.height2, 0]);
+		this.xAxis2 		= d3.svg.axis().scale(this.x2).orient("bottom").tickFormat(this.tickFormatX);	
+		this.line2 			= d3.svg.line().interpolate(lineChart.interpolate)
+										   .x(function(d) { return lineChart.x2(d.x); })
+		   								   .y(function(d) { return lineChart.y2(d.y); });
+		this.brushed 		= function() {
+			if(lineChart.xAxisType == "string") {
+				var startPos = lineChart.x2.domain().indexOf(lineChart.brush.extent()[0]) - 1;
+				var endPos = lineChart.brush.extent()[1] ? lineChart.x2.domain().indexOf(lineChart.brush.extent()[1]) : lineChart.x2.domain().length;
+				if(lineChart.brush.empty()) {
+					lineChart.x.domain(lineChart.x2.domain());
+					startPos = 0;
+					endPos =  lineChart.x2.domain().length;
+				}
+				else {
+					lineChart.x.domain(lineChart.x2.domain().slice(startPos, endPos));
+				}						
+				lineChart.focus.select(".line").datum(lineChart.context.select(".line").datum().slice(startPos, endPos));
+				lineChart.focus.select(".area").datum(lineChart.context.select(".area").datum().slice(startPos, endPos));
+			}
+			else {
+				lineChart.x.domain(lineChart.brush.empty() ? lineChart.x2.domain() : lineChart.brush.extent());
+			}
+			lineChart.focus.select(".area").attr("d", lineChart.area);
+			lineChart.focus.select(".line").attr("d", lineChart.line);
+			lineChart.focus.select(".x.axis").call(lineChart.xAxis);
+		};
+		this.brush 			= d3.svg.brush().x(this.x2).on("brush", this.brushed);	
+		this.context 		= this.svg.append("g").attr("class", "context").attr("transform", "translate(" + lineChart.margin2.left + "," + lineChart.margin2.top + ")");
+		this.svg.append("clipPath").attr("id", "clip_" + this.key).append("rect").attr("width", this.width).attr("height", this.height);
+	}
+};
+evam.Linechart.prototype.prepareData = function(data) {
+	var lineChart = this;
+	// parse & sort data
+	data.forEach(function(d) {
+		d.x = lineChart.parseX(d.x);
+	    d.y = lineChart.parseY(d.y);
+	});	
+	data.sort(function(a, b){ return d3.ascending(a.x, b.x); });
+};
+evam.Linechart.prototype.draw = function(data) { 	
+	var lineChart = this;	
+	// domains
+	lineChart.x.domain(lineChart.domainX(data.map(function(d) { return d.x; })));	
+	lineChart.y.domain(lineChart.domainY(data.map(function(d) { return d.y; })));
+	if(this.hasBrush) {
+		lineChart.x2.domain(lineChart.x.domain());
+		lineChart.y2.domain(lineChart.y.domain());
+	}
+	// remove old data
+	lineChart.svg.select("g.focus").selectAll("*").remove();
+	lineChart.svg.select("g.context").selectAll("*").remove();	
+	// upper graph
+	lineChart.focus.append("path").datum(data).attr("class", "line").attr("clip-path", "url(#clip_" + lineChart.key + ")").attr("d", lineChart.line);
+	lineChart.focus.append("g").attr("class", "x axis").attr("transform", "translate(0," + lineChart.height + ")").call(lineChart.xAxis);
+	lineChart.focus.append("text").attr("x", lineChart.width - 6).attr("y",  lineChart.height - 6).style("text-anchor", "end").text(lineChart.xAxisTitle);
+	lineChart.focus.append("g").attr("class", "y axis").call(lineChart.yAxis);
+	lineChart.focus.append("text").attr("transform", "rotate(-90)").attr("x", -8).attr("dy", 12).style("text-anchor", "end").text(lineChart.yAxisTitle);
+	if(lineChart.hasBrush) {
+		// lower graph		
+		lineChart.context.append("path").datum(data).attr("class", "line").attr("clip-path", "url(#clip_" + lineChart.key + ")").attr("d", lineChart.line2);
+		lineChart.context.append("g").attr("class", "x axis").attr("transform", "translate(0," + lineChart.height2 + ")").call(lineChart.xAxis2);
+		lineChart.context.append("g").attr("class", "x brush").call(lineChart.brush)
+	    		 	  	 .selectAll("rect").attr("y", -6).attr("height", lineChart.height2 + 7);
+	}
+	// mousemove function		
+	var mousemove = function() {
+	    var mouseX = d3.mouse(this)[0];
+		var x0 = lineChart.x.invert(mouseX);
+        var i = lineChart.bisectY(data, x0, 1);
+        var d0 = data[i - 1];
+        var d1 = data[i];
+        var d = x0 - d0.x > d1.x - x0 ? d1 : d0;
+        highlight.attr("transform", "translate(" + lineChart.x(d.x) + "," + lineChart.y(d.y) + ")");
+	    var text = highlight.select("text");
+	    text.text(lineChart.xAxisTitle + ": " + d.x + " " + lineChart.yAxisTitle + ": " + d.y);		    
+	    if(mouseX < (lineChart.width / 2)) {text.style("text-anchor", "start").attr("x", 12).attr("y", 3);}
+	    else {text.style("text-anchor", "end").attr("x", -12).attr("y", 3);} 	    
+	};
+	// highlight object for point information
+	var highlight = lineChart.focus.append("g").attr("class", "highlight").style("display", "none");
+	highlight.append("circle").attr("r", 10).attr("stroke-width", 2);
+	highlight.append("text").style("fill", "red").style("font-size", "12px").style("font-weight", "bold");
+	lineChart.focus.append("rect").attr("class", "overlay").attr("width", lineChart.width).attr("height", lineChart.height)
+       		       .on("mouseover", function() { highlight.style("display", null); })
+   			       .on("mouseout", function() { highlight.style("display", "none"); })
+   			       .on("mousemove", mousemove);	
+};
+
+// Multi Series Line Chart
+evam.MultiSeriesLinechart = function(options){ 	
+	evam.Linechart.call(this, options);	
+}; 
+evam.MultiSeriesLinechart.prototype = Object.create(evam.Linechart.prototype);
+evam.MultiSeriesLinechart.prototype.initialize = function() { 
+	evam.Linechart.prototype.initialize.call(this);
+	var multiSeriesChart	= this;
+	this.color				= d3.scale.category10();
+	if(this.hasBrush) {
+		this.brushed 		= function() {
+			if(multiSeriesChart.xAxisType == "string") {
+				var startPos = multiSeriesChart.x2.domain().indexOf(multiSeriesChart.brush.extent()[0]) - 1;
+				var endPos = multiSeriesChart.brush.extent()[1] ? multiSeriesChart.x2.domain().indexOf(multiSeriesChart.brush.extent()[1]) : multiSeriesChart.x2.domain().length;
+				if(multiSeriesChart.brush.empty()) {
+					multiSeriesChart.x.domain(multiSeriesChart.x2.domain());
+					startPos = 0;
+					endPos =  multiSeriesChart.x2.domain().length;
+				}
+				else {
+					multiSeriesChart.x.domain(multiSeriesChart.x2.domain().slice(startPos, endPos));
+				}								
+				var categoriedData = [];
+				multiSeriesChart.context.selectAll(".lineSerie").each(function(data, i) {
+					var newData = {
+						key: data.key,
+						values: data.values.slice(startPos, endPos)
+					};
+					categoriedData.push(newData);
+				});
+				multiSeriesChart.focus.selectAll(".lineSerie").data(categoriedData);
+			}
+			else {
+				multiSeriesChart.x.domain(multiSeriesChart.brush.empty() ? multiSeriesChart.x2.domain() : multiSeriesChart.brush.extent());
+			}				
+			multiSeriesChart.focus.selectAll(".lineSerie").select(".line").attr("d", function(d) {return multiSeriesChart.line(d.values); });
+			multiSeriesChart.focus.select(".x.axis").call(multiSeriesChart.xAxis);	
+		};		
+		multiSeriesChart.brush.on("brush", multiSeriesChart.brushed);
+	}
+};
+evam.MultiSeriesLinechart.prototype.prepareData = function(data) {
+	var multiSeriesChart	 = this;
+	// parse data
+	data.forEach(function(d) {
+		d.x = multiSeriesChart.parseX(d.x);
+	    d.y = multiSeriesChart.parseY(d.y);
+	});		
+};
+evam.MultiSeriesLinechart.prototype.draw = function(data) { 	
+	evam.Linechart.prototype.draw.call(this, data);
+	var multiSeriesChart	 = this;
+	// find keys and categorize data	
+	var categoriedData = d3.nest().key(function(d) { return d.z; })
+						   .sortValues(function(a,b) { return d3.ascending(a.x, b.x); }).entries(data);
+	multiSeriesChart.color.domain(categoriedData.map(function(d) { return d.key; }));
+	// remove lines drawn by linechart
+	multiSeriesChart.focus.select("path").remove();
+	multiSeriesChart.focus.select(".highlight").remove();
+	multiSeriesChart.mousemove = null;
+	if(multiSeriesChart.hasBrush) {
+		multiSeriesChart.context.select("path").remove();
+	}	
+	// add line series
+	var lineSerie = multiSeriesChart.focus.selectAll(".lineSerie").data(categoriedData).enter()
+									.append("g").attr("class", "lineSerie");
 	
+	lineSerie.append("path").attr("class", "line").attr("clip-path", "url(#clip_" + multiSeriesChart.key + ")")
+			 .attr("d", function(d) { return multiSeriesChart.line(d.values); })
+			 .attr("data-legend", function(d) { return d.key; })
+			 .style("stroke", function(d) { return multiSeriesChart.color(d.key); });	
+	if(multiSeriesChart.hasBrush) {
+		var lineSerieContext = multiSeriesChart.context.selectAll(".lineSerie").data(categoriedData).enter()
+									    	   .append("g").attr("class", "lineSerie");
+
+		lineSerieContext.append("path").attr("class", "line").attr("clip-path", "url(#clip_" + multiSeriesChart.key + ")")
+					    .attr("d", function(d) { return multiSeriesChart.line2(d.values);})
+					    .style("stroke", function(d) { return multiSeriesChart.color(d.key); });
+	}
+	// create legend
+	var legend = multiSeriesChart.svg.append("g").attr("class","legend").style("font-size", "12px").call(d3.legend);
+	legend.attr("transform","translate(" + (multiSeriesChart.width + multiSeriesChart.margin.left - legend.select("rect.legend-box").attr('width')) + "," + (multiSeriesChart.margin.top + 20) + ")");
 };
 
 // Area Chart
-evam.Areachart = function(key, title, xAxis, yAxis, requestUrl, requestData){ 
-	evam.Graph.call(this, key, title, xAxis, yAxis, requestUrl, requestData);	
-	this.outerHeight		= 500;
-	this.margin 			= {top: 5, right: 10, bottom: 20, left: 45};
-	this.width 				= this.outerWidth - this.margin.left - this.margin.right;
-    this.height 			= this.outerHeight - this.margin.top - this.margin.bottom;
-    this.parseX 			= d3.time.format("%d.%m.%Y").parse;
+evam.Areachart = function(options){ 
+	evam.Linechart.call(this, options);	
 }; 
-evam.Areachart.prototype = Object.create(evam.Graph.prototype);
+evam.Areachart.prototype = Object.create(evam.Linechart.prototype);
 evam.Areachart.prototype.initialize = function() { 
+	evam.Linechart.prototype.initialize.call(this);
 	var areaChart 			= this;
-	this.x 					= d3.time.scale().range([0, this.width]);
-	this.y 					= d3.scale.linear().range([this.height, 0]);
-	this.xAxis 				= d3.svg.axis().scale(this.x).orient("bottom").tickFormat(evam.customTimeFormat);
-	this.yAxis 				= d3.svg.axis().scale(this.y).orient("left");
 	this.area 				= d3.svg.area().x(function(d) { return areaChart.x(d.x); })
     									   .y0(areaChart.height)
     									   .y1(function(d) { return areaChart.y(d.y); });
-	this.svg 				= d3.select(this.jqueryObject[0]).append("svg").attr("width", this.outerWidth).attr("height", this.outerHeight)
-											   			  	 .append("g").attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+	if(areaChart.hasBrush) {
+		this.area2 			= d3.svg.area().x(function(d) { return areaChart.x2(d.x); })
+										   .y0(areaChart.height2)
+										   .y1(function(d) { return areaChart.y2(d.y); });
+	}
 };
-evam.Areachart.prototype.draw = function() { 	
-	var areaChart = this;
-	d3.json(this.requestUrl, function(error, data) {		
-		if (error) return console.warn(error);		
-		// parse data
-		data.forEach(function(d) {
-			d.x = areaChart.parseX(d.x);
-		    d.y = +d.y;
-		});
-		// sort data and extend domains	
-		data.sort(function(a, b) { return a.x - b.x; });
-		areaChart.x.domain([data[0].x, data[data.length - 1].x]);
-		areaChart.y.domain([0, 1.1 * d3.max(data.map(function(d) { return d.y; }))]);
-		// area
-		areaChart.svg.append("path").datum(data).attr("class", "area").attr("d", areaChart.area);
-		// axises		
-		areaChart.svg.append("g").attr("class", "x axis").attr("transform", "translate(0," + areaChart.height + ")").call(areaChart.xAxis);
-		areaChart.svg.append("text").attr("x", areaChart.width - 6).attr("y",  areaChart.height - 6).style("text-anchor", "end").text(areaChart.xAxisTitle);
-		areaChart.svg.append("g").attr("class", "y axis").call(areaChart.yAxis);
-		areaChart.svg.append("text").attr("transform", "rotate(-90)").attr("y", 6).attr("dy", ".71em").style("text-anchor", "end").text(areaChart.yAxisTitle);
-		// mousemove function
-		var bisectY = d3.bisector(function(d) { return d.x; }).left;
-		var mousemove = function() {
-		    var x0 = areaChart.x.invert(d3.mouse(this)[0]);
-	        var i = bisectY(data, x0, 1);
-	        var d0 = data[i - 1];
-	        var d1 = data[i];
-	        var d = x0 - d0.x > d1.x - x0 ? d1 : d0;
-		    focus.attr("transform", "translate(" + areaChart.x(d.x) + "," + areaChart.y(d.y) + ")");
-		    focus.select("text").text(d.y);
-		};
-		// focus object for point information
-		var focus = areaChart.svg.append("g").attr("class", "focus").style("display", "none");
-		focus.append("circle").attr("r", 10).attr("stroke-width", 2);
-		focus.append("text").attr("x", 0).attr("y", -12).style("fill", "red").style("text-anchor", "middle").style("font-size", "12px").style("font-weight", "bold");
-		areaChart.svg.append("rect").attr("class", "overlay").attr("width", areaChart.width).attr("height", areaChart.height)
-	       		     .on("mouseover", function() { focus.style("display", null); })
-       			     .on("mouseout", function() { focus.style("display", "none"); })
-       			     .on("mousemove", mousemove);		  
-	})
-	.header("Content-Type","application/x-www-form-urlencoded")
-    .send("POST");
-};
-
-// Area Chart with Brush
-evam.AreachartBrush = function(key, title, xAxis, yAxis, requestUrl, requestData){ 
-	evam.Areachart.call(this, key, title, xAxis, yAxis, requestUrl, requestData);		
-	this.margin 			= {top: 5, right: 10, bottom: 100, left: 45};
-	this.margin2 			= {top: 430, right: 10, bottom: 20, left: 45};
-	this.width 				= this.outerWidth - this.margin.left - this.margin.right;
-    this.height 			= this.outerHeight - this.margin.top - this.margin.bottom;
-    this.height2 			= this.outerHeight - this.margin2.top - this.margin2.bottom;    
-}; 
-evam.AreachartBrush.prototype = Object.create(evam.Areachart.prototype);
-evam.AreachartBrush.prototype.initialize = function() { 	
-	var areaChartBrush 		= this;
-	this.x 					= d3.time.scale().range([0, this.width]);
-	this.x2 				= d3.time.scale().range([0, this.width]);
-	this.y 					= d3.scale.linear().range([this.height, 0]);	
-	this.y2 				= d3.scale.linear().range([this.height2, 0]);
-	this.xAxis				= d3.svg.axis().scale(this.x).orient("bottom").tickFormat(evam.customTimeFormat);
-	this.xAxis2 			= d3.svg.axis().scale(this.x2).orient("bottom").tickFormat(evam.customTimeFormat);
-	this.yAxis				= d3.svg.axis().scale(this.y).orient("left");	
-	this.area 				= d3.svg.area().x(function(d) { return areaChartBrush.x(d.x); })
-    									   .y0(areaChartBrush.height)
-    									   .y1(function(d) { return areaChartBrush.y(d.y); });
-	this.area2 				= d3.svg.area().x(function(d) { return areaChartBrush.x2(d.x); })
-    							 		   .y0(areaChartBrush.height2)
-    							 		   .y1(function(d) { return areaChartBrush.y2(d.y); });
-	// brushed function
-	this.brushed = function() {
-		areaChartBrush.x.domain(areaChartBrush.brush.empty() ? areaChartBrush.x2.domain() : areaChartBrush.brush.extent());
-		areaChartBrush.focus.select(".area").attr("d", areaChartBrush.area);
-		areaChartBrush.focus.select(".x.axis").call(areaChartBrush.xAxis);
-	};
-	this.brush 				= d3.svg.brush().x(this.x2).on("brush", this.brushed);
-	this.svg 				= d3.select(this.jqueryObject[0]).append("svg").attr("width", this.outerWidth).attr("height", this.outerHeight);	
-	this.focus 				= this.svg.append("g").attr("class", "focus").attr("transform", "translate(" + areaChartBrush.margin.left + "," + areaChartBrush.margin.top + ")");
-	this.context 			= this.svg.append("g").attr("class", "context").attr("transform", "translate(" + areaChartBrush.margin2.left + "," + areaChartBrush.margin2.top + ")");
-	this.svg.append("defs").append("clipPath").attr("id", "clip").append("rect").attr("width", this.width).attr("height", this.height);
-};
-evam.AreachartBrush.prototype.draw = function() { 	
-	var areaChartBrush = this;
-	d3.json(this.requestUrl, function(error, data) {		
-		if (error) return console.warn(error);		
-		// parse data
-		data.forEach(function(d) {
-			d.x = areaChartBrush.parseX(d.x);
-		    d.y = +d.y;
-		});
-		// extend domains
-		areaChartBrush.x.domain(d3.extent(data.map(function(d) { return d.x; })));
-		areaChartBrush.y.domain([0, 1.1 * d3.max(data.map(function(d) { return d.y; }))]);
-		areaChartBrush.x2.domain(areaChartBrush.x.domain());
-		areaChartBrush.y2.domain(areaChartBrush.y.domain());				
-		// upper graph
-		areaChartBrush.focus.append("path").datum(data).attr("class", "area").attr("d", areaChartBrush.area);
-		areaChartBrush.focus.append("g").attr("class", "x axis").attr("transform", "translate(0," + areaChartBrush.height + ")").call(areaChartBrush.xAxis);
-		areaChartBrush.focus.append("text").attr("x", areaChartBrush.width - 6).attr("y",  areaChartBrush.height - 6).style("text-anchor", "end").text(areaChartBrush.xAxisTitle);
-		areaChartBrush.focus.append("g").attr("class", "y axis").call(areaChartBrush.yAxis);
-		areaChartBrush.focus.append("text").attr("transform", "rotate(-90)").attr("y", 6).attr("dy", ".71em").style("text-anchor", "end").text(areaChartBrush.yAxisTitle);
-		// lower graph		
-		areaChartBrush.context.append("path").datum(data).attr("class", "area").attr("d", areaChartBrush.area2);
-		areaChartBrush.context.append("g").attr("class", "x axis").attr("transform", "translate(0," + areaChartBrush.height2 + ")").call(areaChartBrush.xAxis2);
-		areaChartBrush.context.append("g").attr("class", "x brush").call(areaChartBrush.brush)
-	    		 	  .selectAll("rect").attr("y", -6).attr("height", areaChartBrush.height2 + 7);
-	})
-	.header("Content-Type","application/x-www-form-urlencoded")
-    .send("POST");
+evam.Areachart.prototype.draw = function(data) { 	
+	evam.Linechart.prototype.draw.call(this, data);
+	var areaChart 			= this;
+	// upper graph - area
+	areaChart.focus.insert("path", "path.line").datum(data).attr("class", "area").attr("clip-path", "url(#clip_" + areaChart.key + ")").attr("d", areaChart.area);
+	if(areaChart.hasBrush) {
+		// lower graph - area	
+		areaChart.context.insert("path", "path.line").datum(data).attr("class", "area").attr("clip-path", "url(#clip_" + areaChart.key + ")").attr("d", areaChart.area2);
+	}
 };
 
 //Pie Chart
-evam.Piechart = function(key, title, requestUrl, requestData) {
-	evam.Graph.call(this, key, title, 'x', 'y', requestUrl, requestData);
-	this.outerHeight = 500;
-	this.margin = {
-		top : 5,
-		right : 10,
-		bottom : 20,
-		left : 45
-	};
-	this.width = this.outerWidth - this.margin.left - this.margin.right;
-	this.height = this.outerHeight - this.margin.top - this.margin.bottom;
-	this.radius = Math.min(this.width, this.height) / 2;
+evam.Piechart = function(options) {
+	evam.Graph.call(this, options);
+	this.outerHeight		= options.height || Math.min(this.outerWidth, 500);
+	this.margin 			= {top: 30, right: 50, bottom: 30, left: 50};
+	this.width 				= this.outerWidth - this.margin.left - this.margin.right;
+    this.height 			= this.outerHeight - this.margin.top - this.margin.bottom;  
+	this.radius 			= Math.min(this.width, this.height) / 2;
+	this.innerRadius		= 0;
+	this.c1					= 0.1;
+	this.c2					= 2.2;
+	this.c3					= 1;
 };
 evam.Piechart.prototype = Object.create(evam.Graph.prototype);
-evam.Piechart.prototype.initialize = function(value) {
-	var innerRadiusValue = 0;
-	if (value == "donut"){
-		innerRadiusValue = this.radius - 130;
-	}
-	this.color = d3.scale.category20c();
-	this.arc = d3.svg.arc().outerRadius(this.radius - 10).innerRadius(innerRadiusValue);
-	this.pie = d3.layout.pie().sort(null).value(function(d) {
+evam.Piechart.prototype.initialize = function() {
+	evam.Graph.prototype.initialize.call(this);
+	this.color 				= d3.scale.category20c();
+	this.arc 				= d3.svg.arc().outerRadius(this.radius).innerRadius(this.innerRadius);
+	this.pie 				= d3.layout.pie().sort(null).value(function(d) {
 		return d.y;
 	});
-	this.svg = d3.select(this.jqueryObject[0]).append("svg").attr("width",
-			this.width).attr("height", this.height)
-			.attr("style", "padding:50px; cursor:pointer;").append("g").attr(
-			"transform",
-			"translate(" + this.width / 2 + "," + this.height / 2 + ")");
-
+	this.svg 				= d3.select(this.parentObject[0]).append("svg").attr("width", this.outerWidth).attr("height", this.outerHeight)
+								.attr("viewBox", "0 0 " + this.outerWidth + " " + this.outerHeight).attr("preserveAspectRatio", "xMidYMid")
+								.append("g").attr("transform", "translate(" + parseFloat(this.margin.left + (this.width / 2.0)) + "," + parseFloat(this.margin.top + (this.height / 2.0)) + ")");
 };
-evam.Piechart.prototype.draw = function(value) {
+evam.Piechart.prototype.prepareData = function(data) {
+	// parse data
+	data.forEach(function(d) {
+		d.x = evam.selectParseFormat("string")(d.x);
+	    d.y = evam.selectParseFormat("number")(d.y);
+	});	
+};
+evam.Piechart.prototype.draw = function(data) {
 	var pieChart = this;
-	var text = "";
-	var c1, c2, c3 = 1;
-	if (value == "donut"){
-		c1 = 0.1;
-		c2 = 1.6;
-		c3 = 1;
-	} else {
-		c1 = 0.1;
-		c2 = 2.3;
-		c3 = 1.2;
-	}
-	d3.json(
-			this.requestUrl,
-			function(error, data) {
-				if (error)
-					return console.warn(error);
-				// parse data
-				data.forEach(function(d) {
-					d.y = +d.y;
-				});
-				var r2d = Math.PI / 180;
-				var g = pieChart.svg.selectAll(".arc").data(pieChart.pie(data))
-						.enter()
-						.append("g")
-						.attr("class", "arc")
-						.on("mouseover",
-							function(d) {
-								var c = pieChart.arc.centroid(d);
-								pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)")
-																.style("font-size", "14px");
-								pieChart.svg.selectAll(".arc").filter(function(x) { return x.data.x == d.data.x; })
-																.attr("transform", "translate(" + c[0] * c1 + "," + c[1] * c1 + ")")
-																.style("font-size", "20px");
-								focus.style("display", null);
-								focus.attr("transform", "translate(" + c[0] * c2 + "," + c[1] * c2 + ") rotate(" + evam.pieChartTextAngle((d.startAngle + d.endAngle) / 2, -90) + ")");
-							    focus.select("text").text(d.data.y).style("fill", fill()).style("text-anchor", "middle");
-								function fill() {
-									return pieChart.color(d.data.x);
-								};
-							})
-						.on("mouseout", 
-							function(d) {
-								focus.style("display", "none");
-								pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)")
-																.style("font-size", "14px");
-							});
-				g.append("path").attr("d", pieChart.arc).style("fill",
-						function(d) {
-							return pieChart.color(d.data.x);
-						});
-
-				g.append("text")
-					.attr("transform", 
-						function(d) {
-							var c = pieChart.arc.centroid(d);
-							return "translate(" + c[0] * c3 + "," + c[1] * c3 + ") rotate(" + evam.radionToAngle((d.startAngle + d.endAngle) / 2, -90, 90) + ")";
-						})					
-					.attr("dy", ".35em")
-					.attr("class", "pieChartArc")
-					.style("text-anchor", "middle")
-					.text(
-						function(d) {
-							return d.data.x;
-						});
-				var focus = pieChart.svg.append("g").attr("class", "focus").style("display", "none");				
-				focus.append("text").style("fill", "red").style("text-anchor", "middle").style("font-size", "20px").style("font-weight", "bold");
-			}).header("Content-Type", "application/x-www-form-urlencoded")
-			.send("POST");
+	var g = pieChart.svg.selectAll(".arc").data(pieChart.pie(data)).enter().append("g").attr("class", "arc");
+	g.on("mouseover", function(d) {
+		var c = pieChart.arc.centroid(d);		
+		pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)");
+		pieChart.svg.selectAll(".arc").filter(function(x) { return x.data.x == d.data.x; })
+					.attr("transform", "translate(" + c[0] * pieChart.c1 + "," + c[1] * pieChart.c1 + ")");		
+		focus.style("display", null).attr("transform", "translate(" + c[0] * pieChart.c2 + "," + c[1] * pieChart.c2 + ") rotate(" + evam.pieChartTextAngle((d.startAngle + d.endAngle) / 2, -90) + ")");
+	    focus.select("text").text(d.data.y).style("fill", function() { return pieChart.color(d.data.x); });
+	});
+	g.on("mouseout", function(d) {
+		focus.style("display", "none");
+		pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)");
+	});
+	g.append("path").attr("d", pieChart.arc).style("fill", function(d) { return pieChart.color(d.data.x); });
+	g.append("text").attr("dy", ".35em").attr("class", "pieChartArc")
+				    .text(function(d) { return d.data.x; }).attr("transform", function(d) {
+		var c = pieChart.arc.centroid(d);
+		return "translate(" + parseFloat(c[0] * pieChart.c3) + "," + parseFloat(c[1] * pieChart.c3) + ") rotate(" + evam.radionToAngle((d.startAngle + d.endAngle) / 2, -90, 90) + ")";
+	});			
+	var focus = pieChart.svg.append("g").attr("class", "focus").style("display", "none");				
+	focus.append("text");
 };
+
+// Donut
+evam.Donutchart = function(options) {
+	evam.Piechart.call(this, options);
+	this.c2					= 1.5;
+	this.innerRadius		= this.radius / 2;
+};
+evam.Donutchart.prototype = Object.create(evam.Piechart.prototype);

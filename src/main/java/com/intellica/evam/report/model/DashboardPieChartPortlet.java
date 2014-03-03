@@ -14,10 +14,11 @@ public class DashboardPieChartPortlet extends DashboardPortlet {
 		super(PortletType.PIE_CHART);
 	}
 	
-	public DashboardPieChartPortlet(String portletKey, 
-								   	 String portletTitle,
-								   	 Integer portletWidth,
-								   	 Integer refreshInterval) {
-		super(PortletType.PIE_CHART, portletKey, portletTitle, portletWidth, refreshInterval);
+	public DashboardPieChartPortlet(DataSource dataSource,
+									String portletKey, 									
+								   	String portletTitle,
+								   	Integer portletWidth,
+								   	Integer refreshInterval) {
+		super(PortletType.PIE_CHART, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 	}
 }

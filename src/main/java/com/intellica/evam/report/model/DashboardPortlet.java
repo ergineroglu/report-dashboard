@@ -9,28 +9,45 @@ import com.intellica.evam.report.util.PortletType;
  *
  */
 public class DashboardPortlet {
+	private DataSource dataSource;
 	private String portletKey;
 	private String portletTitle;
 	private PortletType portletType;
 	private Integer portletWidth; // width by percent of a row - min 1 - max 100 - default 50
-	private Integer refreshInterval; // in seconds 
+	private Integer refreshInterval; // in seconds 		
 	
 	public DashboardPortlet(PortletType portletType) {
 		this.portletType = portletType; 
 	}
 	
 	public DashboardPortlet(PortletType portletType, 
+							DataSource dataSource,
 							String portletKey, 
 							String portletTitle,
 							Integer portletWidth,
 							Integer refreshInterval) {
 		this.portletType = portletType; 
+		this.dataSource = dataSource;
 		this.portletKey = portletKey;
 		this.portletTitle = portletTitle;
 		this.portletWidth = portletWidth;
 		this.refreshInterval = refreshInterval;
 	}
 	
+	/**
+	 * @return the dataSource
+	 */
+	public DataSource getDataSource() {
+		return dataSource;
+	}
+
+	/**
+	 * @param dataSource the dataSource to set
+	 */
+	public void setDataSource(DataSource dataSource) {
+		this.dataSource = dataSource;
+	}
+
 	/**
 	 * @return the portletKey
 	 */

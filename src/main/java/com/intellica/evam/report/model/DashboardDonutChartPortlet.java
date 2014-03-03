@@ -14,10 +14,11 @@ public class DashboardDonutChartPortlet extends DashboardPortlet {
 		super(PortletType.DONUT_CHART);
 	}
 	
-	public DashboardDonutChartPortlet(String portletKey, 
-								   	 String portletTitle,
-								   	 Integer portletWidth,
-								   	 Integer refreshInterval) {
-		super(PortletType.DONUT_CHART, portletKey, portletTitle, portletWidth, refreshInterval);
+	public DashboardDonutChartPortlet(DataSource dataSource,
+									  String portletKey, 								   	  
+									  String portletTitle,
+								   	  Integer portletWidth,
+								   	  Integer refreshInterval) {
+		super(PortletType.DONUT_CHART, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 	}
 }
