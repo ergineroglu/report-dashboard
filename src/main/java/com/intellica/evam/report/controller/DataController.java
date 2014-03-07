@@ -8,6 +8,7 @@ package com.intellica.evam.report.controller;
  */
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -38,16 +39,6 @@ public class DataController {
 					 		  		   	  @PathVariable String portletKey) {
 		
 		try {
-//			ArrayList<GraphData> responseList = new ArrayList<GraphData>();
-//			responseList.add(new GraphData2D<String, Double>("01.03.2012", 298.13));
-//			responseList.add(new GraphData2D<String, Double>("10.03.2012", 621.13));
-//			responseList.add(new GraphData2D<String, Double>("18.03.2012", 500.13));
-//			responseList.add(new GraphData2D<String, Double>("20.03.2012", 482.13));
-//			responseList.add(new GraphData2D<String, Double>("21.03.2012", 382.13));
-//			responseList.add(new GraphData2D<String, Double>("30.04.2012", 590.13));
-//			responseList.add(new GraphData2D<String, Double>("01.05.2012", 582.13));
-//			responseList.add(new GraphData2D<String, Double>("30.02.2013", 182.13));
-//			responseList.add(new GraphData2D<String, Double>("12.03.2013", 782.13));
 			// get portlet
 			DashboardPortlet portlet = portletCacheService.getPortlet(userId, tabKey, portletKey);
 			if(portlet == null) {
@@ -56,16 +47,24 @@ public class DataController {
 			// get data
 			List<? extends GraphData> responseList = null;
 			switch(portlet.getPortletType()) {
+			case TEXT_BOX:
+				responseList = portlet.getDataSource().getData1D();
+				break;
 			case AREA_CHART:
 			case LINE_CHART:
 			case PIE_CHART:
 			case DONUT_CHART:
+			case SELECT_BOX:
 				responseList = portlet.getDataSource().getData2D();
 				break;
 			case MULTISERIES_LINE_CHART:
 				responseList = portlet.getDataSource().getData3D();
 				break;
+			case DATA_TABLE:
+				responseList = portlet.getDataSource().getDataMultipleD();
+				break;
 			default:
+				responseList = new ArrayList();
 				break;
 			}
 			
@@ -74,7 +73,7 @@ public class DataController {
 			return responseArray;
 		}
 	    catch(Exception ex) {
-	    	logger.error("Exception in data handling: %s", ex.toString());
+	    	logger.error("Exception in data handling", ex);
 	    	return null;
 	    }		
 	}

@@ -8,10 +8,14 @@ import java.util.Map;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
+import com.intellica.evam.report.model.GraphData1D;
 import com.intellica.evam.report.model.GraphData2D;
 import com.intellica.evam.report.model.GraphData3D;
+import com.intellica.evam.report.model.GraphDataMultipleD;
 
 /**
  * Author: eeroglu
@@ -22,6 +26,8 @@ import com.intellica.evam.report.model.GraphData3D;
 @Repository("rdbmsDao")
 public class RDBMSDao {
 
+	private static final Logger logger = LoggerFactory.getLogger(RDBMSDao.class);
+	
 	// execute query
 	public List<Object[]> executeQuery(String queryString) {
 		return this.executeQuery(queryString, new HashMap<String, String>());
@@ -58,8 +64,7 @@ public class RDBMSDao {
     			tx.rollback();
     		}
     		catch(RuntimeException rbe){
-    			//logger.error("Cannot rollback transaction", rbe);
-    			// TODO: log exception
+    			logger.error("Cannot rollback transaction", rbe);
     		}
     		
     		// rethrow exception
@@ -74,20 +79,45 @@ public class RDBMSDao {
 	}
 	
 	// Graph2D getters
-	public <K extends Serializable, V extends Serializable> List<GraphData2D<K, V>> executeQuery2D(String queryString) {
-		return this.executeQuery2D(queryString, new HashMap<String, String>());
+	public <X extends Serializable> List<GraphData1D<X>> executeQuery1D(String queryString) {
+		return this.executeQuery1D(queryString, new HashMap<String, String>());
 	}
 	
 	@SuppressWarnings("unchecked")
-	public <K extends Serializable, V extends Serializable> List<GraphData2D<K, V>> executeQuery2D(
+	public <X extends Serializable> List<GraphData1D<X>> executeQuery1D(
 			String queryString, Map<String, String> queryParameters) {
 		// get generic results
 		List<Object[]> genericResultList = this.executeQuery(queryString, queryParameters);
 		// map results
-		List<GraphData2D<K, V>> resultList = new ArrayList<GraphData2D<K, V>>();
+		List<GraphData1D<X>> resultList = new ArrayList<GraphData1D<X>>();
+		for(Object[] rowIter: genericResultList) {
+			if(rowIter.length >= 1) {
+				resultList.add(new GraphData1D<X>((X) rowIter[0]));
+			}
+			else {
+				// TODO: handle row with errors
+			}
+		}
+		
+		return resultList;
+	}
+		
+	
+	// Graph2D getters
+	public <X extends Serializable, Y extends Serializable> List<GraphData2D<X, Y>> executeQuery2D(String queryString) {
+		return this.executeQuery2D(queryString, new HashMap<String, String>());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <X extends Serializable, Y extends Serializable> List<GraphData2D<X, Y>> executeQuery2D(
+			String queryString, Map<String, String> queryParameters) {
+		// get generic results
+		List<Object[]> genericResultList = this.executeQuery(queryString, queryParameters);
+		// map results
+		List<GraphData2D<X, Y>> resultList = new ArrayList<GraphData2D<X, Y>>();
 		for(Object[] rowIter: genericResultList) {
 			if(rowIter.length >= 2) {
-				resultList.add(new GraphData2D<K, V>((K) rowIter[0], (V) rowIter[1]));
+				resultList.add(new GraphData2D<X, Y>((X) rowIter[0], (Y) rowIter[1]));
 			}
 			else {
 				// TODO: handle row with errors
@@ -116,6 +146,23 @@ public class RDBMSDao {
 			else {
 				// TODO: handle row with errors
 			}
+		}
+		
+		return resultList;
+	}
+	
+	// GraphMultipleD getters
+	public List<GraphDataMultipleD> executeQueryMultipleD(String queryString) {
+		return this.executeQueryMultipleD(queryString, new HashMap<String, String>());
+	}
+		
+	public List<GraphDataMultipleD> executeQueryMultipleD(String queryString, Map<String, String> queryParameters) {
+		// get generic results
+		List<Object[]> genericResultList = this.executeQuery(queryString, queryParameters);
+		// map results
+		List<GraphDataMultipleD> resultList = new ArrayList<GraphDataMultipleD>();
+		for(Object[] rowIter: genericResultList) {
+			resultList.add(new GraphDataMultipleD(rowIter));			
 		}
 		
 		return resultList;

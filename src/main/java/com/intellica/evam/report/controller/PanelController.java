@@ -33,11 +33,13 @@ import org.xml.sax.SAXException;
 
 import com.intellica.evam.report.model.ConstantDataSource;
 import com.intellica.evam.report.model.DashboardAreaChartPortlet;
+import com.intellica.evam.report.model.DashboardDataTablePortlet;
 import com.intellica.evam.report.model.DashboardLineChartPortlet;
 import com.intellica.evam.report.model.DashboardMultiseriesLineChartPortlet;
 import com.intellica.evam.report.model.DashboardDonutChartPortlet;
 import com.intellica.evam.report.model.DashboardPieChartPortlet;
 import com.intellica.evam.report.model.DashboardPortlet;
+import com.intellica.evam.report.model.DashboardSelectBoxPortlet;
 import com.intellica.evam.report.model.DashboardTab;
 import com.intellica.evam.report.model.DashboardTextboxPortlet;
 import com.intellica.evam.report.model.DataSource;
@@ -157,7 +159,14 @@ public class PanelController {
 			lineChart.setAxisYFormat(ParserUtils.readSingleTagValueString(portletElement, "y-value-format"));
 			lineChart.setInterpolationMethod(ParserUtils.readSingleTagValueString(portletElement, "interpolationMethod"));
 			lineChart.setBrush(ParserUtils.readSingleTagValueBoolean(portletElement, "brush"));
-			break;		
+			break;	
+		case DATA_TABLE:
+			DashboardDataTablePortlet tablePortlet = (DashboardDataTablePortlet) portlet;
+			// optional fields	
+			NodeList columnNamesTags = portletElement.getElementsByTagName("column-names");
+			if(columnNamesTags.getLength() > 0) {
+				tablePortlet.setColumnNames(ParserUtils.readMultipleTagValueString((Element) columnNamesTags.item(0), "column").toArray(new String[0]));
+			}
 		default:
 			break;
 		}
@@ -174,6 +183,8 @@ public class PanelController {
 	{
 		switch (portletType) {
 		case TEXT_BOX: return new DashboardTextboxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval);
+		case SELECT_BOX: return new DashboardSelectBoxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval);
+		case DATA_TABLE: return new DashboardDataTablePortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 		case LINE_CHART: return new DashboardLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 		case MULTISERIES_LINE_CHART: return new DashboardMultiseriesLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
 		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);		

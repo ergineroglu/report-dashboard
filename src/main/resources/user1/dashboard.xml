@@ -5,13 +5,38 @@
 		<title>Scenario View</title>
 		
 		<portlet>
-			<key>scenario_name</key>
+			<key>scenario_textbox</key>
 			<title>Evam Scenarios</title>
 			<type>textbox</type>
 			<width>40</width>
 			<data-source>
-				<type>database</type><!-- Olası değerler: database, constant -->
-				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
+				<type>constant</type>
+				<values>
+					<delimiter>,</delimiter>
+					<value>A Event</value>
+					<value>B Event</value>
+					<value>C Event</value>
+					<value>D Event</value>
+					<value>E Event</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_select_box</key>
+			<title>Evam Scenarios</title>
+			<type>selectbox</type>
+			<width>60</width>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>\|</delimiter>
+					<value>0|A Event</value>
+					<value>1|B Event</value>
+					<value>2|C Event</value>
+					<value>3|D Event</value>
+					<value>4|E Event</value>
+				</values>
 			</data-source>
 		</portlet>
 		
@@ -115,6 +140,7 @@
 			<x-value-type>string</x-value-type>	
 			<y-value-type>number</y-value-type> 
 			<brush>true</brush>
+			<interpolate>cardinal</interpolate>
 			<data-source>
 				<type>database</type>
 				<query>select tag, count(*), category from hurriyet_s01_table group by category, tag order by category, tag</query>
@@ -230,6 +256,11 @@
 				</values>
 			</data-source>
 		</portlet>
+	</tab>
+	
+	<tab>
+		<key>scenario_view2</key>
+		<title>Circular Charts</title>
 		
 		<portlet>
 			<key>scenario_values_piechart2</key>
@@ -246,7 +277,7 @@
 			<key>scenario_values_piechart3</key>
 			<title>Evam Scenarios Pie Small</title>
 			<type>piechart</type>
-			<width>25</width>
+			<width>67</width>
 			<data-source>
 				<type>constant</type>
 				<values>
@@ -267,162 +298,39 @@
 			<key>scenario_values_donut2</key>
 			<title>Evam Scenarios Donut DB</title>
 			<type>donutchart</type>
-			<width>40</width>
+			<width>50</width>
 			<data-source>
 				<type>database</type><!-- Olası değerler: database, constant -->
 				<query>select to_char(log_time, 'DD.MM.YYYY'), count(*) from (select * from int_log_table order by id asc limit 500000 ) as q group by to_char(log_time, 'DD.MM.YYYY')</query>
 			</data-source>
 		</portlet>
 		
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_state_dist</key> -->
-<!-- 			<title>Selected Scenario State Distribution</title> -->
-<!-- 			<type>pie</type> -->
-<!-- 			<span>4</span> -->
-<!-- 			<interaction>scenario_age_dist(value;scenario_list)</interaction> -->
-<!-- 			<sql>select last_state as x, count(*) as y from #param1#_table group -->
-<!-- 				by last_state</sql> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_event_count</key> -->
-<!-- 			<title>Selected Scenario Event Count</title> -->
-<!-- 			<type>line</type> -->
-<!-- 			<span>4</span> -->
-<!-- 			<sql>select extract(hour from date_trunc(~hour~, log_time)) as hour, -->
-<!-- 				count(*) from int_log_table where scenario_name=~#param1#~ group by -->
-<!-- 				extract(hour from date_trunc(~hour~, log_time))</sql> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_age_dist</key> -->
-<!-- 			<title>Selected Scenario/State Age Distribution</title> -->
-<!-- 			<type>pie</type> -->
-<!-- 			<span>4</span> -->
-<!-- 			<sql>select age_var as x, count(*) as y from #param2#_table where -->
-<!-- 				last_state=~#param1#~ group by age_var</sql> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_action_dist</key> -->
-<!-- 			<title>Selected Scenario Action Distribution</title> -->
-<!-- 			<type>pie</type> -->
-<!-- 			<span>4</span> -->
-<!-- 			<sql>select action_name as x, count(*) as y from int_log_table where -->
-<!-- 				scenario_name=~#param1#~ and action_name!=~~ and action_name not -->
-<!-- 				like ~set%~ group by action_name;</sql> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_action_count</key> -->
-<!-- 			<title>Selected Scenario Action Count</title> -->
-<!-- 			<type>line</type> -->
-<!-- 			<span>4</span> -->
-<!-- 			<sql>select extract(hour from date_trunc(~hour~, log_time)) as hour, -->
-<!-- 				count(*) from int_log_table where scenario_name=~#param1#~ group by -->
-<!-- 				extract(hour from date_trunc(~hour~, log_time))</sql> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_log_table</key> -->
-<!-- 			<title>Selected Scenario Logs</title> -->
-<!-- 			<type>table</type> -->
-<!-- 			<span>10</span> -->
-<!-- 			<sql>select scenario_key, scenario_name, previous_state, state, -->
-<!-- 				event, log_time from int_log_table where scenario_name=~#param1#~ -->
-<!-- 				order by log_time desc limit 1000</sql> -->
-<!-- 		</portlet> -->
+		<portlet>
+			<key>scenario_values_table1</key>
+			<title>Evam Scenarios Table</title>
+			<type>datatable</type>
+			<width>50</width>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select id, short_desc, os_user from int_scenario_def</query>
+			</data-source>
+			<column-names>
+				<column>#</column>
+				<column>Açıklama</column>
+				<column>Kullanıcı</column>
+			</column-names>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_table2</key>
+			<title>Evam Scenarios Table Long</title>
+			<type>datatable</type>
+			<width>100</width>
+			<data-source>
+				<type>database</type><!-- Olası değerler: database, constant -->
+				<query>select * from int_scenario_def</query>
+			</data-source>
+		</portlet>
 
 	</tab>
-<!-- 	<tab> -->
-<!-- 		<key>key_customer_view</key> -->
-<!-- 		<title>Key/Customer View</title> -->
-<!-- 		<portlet> -->
-<!-- 			<key>text_input</key> -->
-<!-- 			<title>Evam ID</title> -->
-<!-- 			<type>textinput</type> -->
-<!-- 			<span>10</span> -->
-<!-- 			<sql>select scenario_name from int_scenario_def</sql> -->
-<!-- 			<refreshInterval>0</refreshInterval> -->
-<!-- 			<interaction>scenario_table(value),scenario_iom_table(value) -->
-<!-- 			</interaction> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_iom_table</key> -->
-<!-- 			<title>scenario state status for iom key</title> -->
-<!-- 			<type>table</type> -->
-<!-- 			<span>10</span> -->
-<!-- 			<sql>select * from v_all_scenario_states where iom_key=~#param1#~ -->
-<!-- 			</sql> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_table</key> -->
-<!-- 			<title>scenarios for iom key</title> -->
-<!-- 			<type>table</type> -->
-<!-- 			<span>10</span> -->
-<!-- 			<sql>select scenario_key, scenario_name, previous_state, state, -->
-<!-- 				event, log_time from int_log_table where scenario_key=~#param1#~ -->
-<!-- 				order by log_time desc limit 1000</sql> -->
-<!-- 		</portlet> -->
-<!-- 	</tab> -->
-<!-- 	<tab> -->
-<!-- 		<key>realtime_view</key> -->
-<!-- 		<title>Realtime View</title> -->
-<!-- 	</tab> -->
-<!-- 	<tab> -->
-<!-- 		<key>hurriyet_view</key> -->
-<!-- 		<title>Hurriyet CS</title> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario_pv_count</key> -->
-<!-- 			<title>Hourly Page View Count</title> -->
-<!-- 			<type>line</type> -->
-<!-- 			<span>6</span> -->
-<!-- 			<sql>select event_time as hour, count(*) as count from -->
-<!-- 				hurriyet_s01_table group by event_time order by event_time desc; -->
-<!-- 			</sql> -->
-<!-- 			<autorun>true</autorun> -->
-<!-- 			<interaction>scenario__by_category_hourly(value)</interaction> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario__by_category_hourly</key> -->
-<!-- 			<title>Web Site hourly distribution by category</title> -->
-<!-- 			<type>pie</type> -->
-<!-- 			<span>6</span> -->
-<!-- 			<sql>select category as x, count(*) as y from hurriyet_s01_table -->
-<!-- 				where event_time=~#param1#~ group by category order by count(*) -->
-<!-- 				desc;</sql> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario__by_category</key> -->
-<!-- 			<title>Web Site distribution by category</title> -->
-<!-- 			<type>pie</type> -->
-<!-- 			<span>6</span> -->
-<!-- 			<sql>select category as x, count(*) as y from hurriyet_s01_table -->
-<!-- 				group by category order by count(*) desc;</sql> -->
-<!-- 			<autorun>true</autorun> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario__by_city</key> -->
-<!-- 			<title>Web Site distribution by City</title> -->
-<!-- 			<type>pie</type> -->
-<!-- 			<span>5</span> -->
-<!-- 			<sql>select country as x, count(*) as y from hurriyet_s01_table group -->
-<!-- 				by country order by count(*) desc;</sql> -->
-<!-- 			<autorun>true</autorun> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario__by_tag</key> -->
-<!-- 			<title>Web Site distribution by Tag</title> -->
-<!-- 			<type>pie</type> -->
-<!-- 			<span>5</span> -->
-<!-- 			<sql>select tag as x, count(*) as y from hurriyet_s01_table where -->
-<!-- 				tag!=~null~ group by tag order by count(*) desc;</sql> -->
-<!-- 			<autorun>true</autorun> -->
-<!-- 		</portlet> -->
-<!-- 		<portlet> -->
-<!-- 			<key>scenario__urls</key> -->
-<!-- 			<title>Web Site urls</title> -->
-<!-- 			<type>table</type> -->
-<!-- 			<span>12</span> -->
-<!-- 			<sql>select url, count(*) from hurriyet_s01_table group by url order -->
-<!-- 				by count(*) desc limit 10;</sql> -->
-<!-- 			<autorun>true</autorun> -->
-<!-- 		</portlet> -->
-
-<!-- 	</tab> -->
 </dashboard>

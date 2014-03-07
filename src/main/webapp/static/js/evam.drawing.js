@@ -11,11 +11,11 @@ evam.customTimeFormat = d3.time.format.multi([
 	["%b", function(d) { return d.getMonth(); }],
 	["%Y", function() { return true; }]
 ]);
-evam.radionToAngle = function(angle, offset, threshold) {
+evam.pieChartInnerTextAngle = function(angle, offset, threshold) {
     var a = angle * 180 / Math.PI + offset;
     return a > threshold ? a - 180 : a;
 };
-evam.pieChartTextAngle = function(angle, offset) {
+evam.pieChartOuterTextAngle = function(angle, offset) {
 	var a = angle * 180 / Math.PI + offset;
 	return 	0 < a && a < 180 ? a - 90 : 180 < a && a < 270 ? a + 90 : -90 < a && a < 0 ? a + 90 : a;
 };
@@ -145,8 +145,54 @@ evam.Graph.prototype.stopSpinner = function() {
 	this.spinner.stop();
 };
 evam.Graph.prototype.resize = function() {
-	var targetWidth = this.parentObject.width();    
-    this.parentObject.children('svg').attr("width", targetWidth);	
+    this.parentObject.children('svg').attr("width", this.parentObject.width()).attr("height", this.parentObject.height());	
+};
+
+// Text Box
+evam.Textbox = function(options){ 
+	evam.Graph.call(this, options);	
+	this.textBox 			= this.parentObject.find('input[type="text"]');
+};
+evam.Textbox.prototype = Object.create(evam.Graph.prototype);
+evam.Textbox.prototype.prepareData = function(data) {
+	this.textBox.typeahead({
+		items: 5,
+		minLength: 1,
+		source: data.map(function(d) { return d.x; })
+	});
+};
+
+// Select Box
+evam.Selectbox = function(options){ 
+	evam.Graph.call(this, options);	
+	this.selectBox 			= this.parentObject.find('select');
+};
+evam.Selectbox.prototype = Object.create(evam.Graph.prototype);
+evam.Selectbox.prototype.prepareData = function(data) {
+	var selectObj 			= this;
+	var previousValue		= selectObj.selectBox.val();
+	selectObj.selectBox.find('option.generated').remove();
+	$.each(data, function(i, val) {
+		$("<option class='generated' value='" + val.x + "'>" + val.y + "</option>").appendTo(selectObj.selectBox);
+	});
+	selectObj.selectBox.find("option[value=" + previousValue + "]").prop("selected", true);
+};
+
+// Data Table
+evam.Datatable = function(options){ 
+	evam.Graph.call(this, options);	
+};
+evam.Datatable.prototype = Object.create(evam.Graph.prototype);
+evam.Datatable.prototype.prepareData = function(data) {
+	var tableObject 		= this.parentObject;	
+	tableObject.find('table tbody > tr').remove();
+	$.each(data, function(x, row) {
+		var newRow = $("<tr/>");
+		$.each(row.data, function(y, col) {
+			$("<td>" + col + "</td>").appendTo(newRow);
+		});
+		newRow.appendTo(tableObject.find('table tbody'));
+	});	
 };
 
 // X-Y Chart
@@ -407,13 +453,13 @@ evam.Areachart.prototype.draw = function(data) {
 evam.Piechart = function(options) {
 	evam.Graph.call(this, options);
 	this.outerHeight		= options.height || Math.min(this.outerWidth, 500);
-	this.margin 			= {top: 30, right: 50, bottom: 30, left: 50};
+	this.margin 			= {top: 50, right: 50, bottom: 10, left: 10};
 	this.width 				= this.outerWidth - this.margin.left - this.margin.right;
     this.height 			= this.outerHeight - this.margin.top - this.margin.bottom;  
 	this.radius 			= Math.min(this.width, this.height) / 2;
 	this.innerRadius		= 0;
 	this.c1					= 0.1;
-	this.c2					= 2.2;
+	this.c2					= 2.0;
 	this.c3					= 1;
 };
 evam.Piechart.prototype = Object.create(evam.Graph.prototype);
@@ -425,8 +471,8 @@ evam.Piechart.prototype.initialize = function() {
 		return d.y;
 	});
 	this.svg 				= d3.select(this.parentObject[0]).append("svg").attr("width", this.outerWidth).attr("height", this.outerHeight)
-								.attr("viewBox", "0 0 " + this.outerWidth + " " + this.outerHeight).attr("preserveAspectRatio", "xMidYMid")
-								.append("g").attr("transform", "translate(" + parseFloat(this.margin.left + (this.width / 2.0)) + "," + parseFloat(this.margin.top + (this.height / 2.0)) + ")");
+								.attr("viewBox", "0 0 " + this.outerWidth + " " + this.outerHeight).attr("preserveAspectRatio", "xMidYMid");
+	this.circle				= this.svg.append("g").attr("transform", "translate(" + parseFloat(this.margin.left + (this.width / 2.0)) + "," + parseFloat(this.margin.top + (this.height / 2.0)) + ")");
 };
 evam.Piechart.prototype.prepareData = function(data) {
 	// parse data
@@ -437,33 +483,93 @@ evam.Piechart.prototype.prepareData = function(data) {
 };
 evam.Piechart.prototype.draw = function(data) {
 	var pieChart = this;
-	var g = pieChart.svg.selectAll(".arc").data(pieChart.pie(data)).enter().append("g").attr("class", "arc");
+	// create legend	
+	var g = pieChart.circle.selectAll(".arc").data(pieChart.pie(data)).enter().append("g").attr("class", "arc");
 	g.on("mouseover", function(d) {
 		var c = pieChart.arc.centroid(d);		
-		pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)");
-		pieChart.svg.selectAll(".arc").filter(function(x) { return x.data.x == d.data.x; })
-					.attr("transform", "translate(" + c[0] * pieChart.c1 + "," + c[1] * pieChart.c1 + ")");		
-		focus.style("display", null).attr("transform", "translate(" + c[0] * pieChart.c2 + "," + c[1] * pieChart.c2 + ") rotate(" + evam.pieChartTextAngle((d.startAngle + d.endAngle) / 2, -90) + ")");
-	    focus.select("text").text(d.data.y).style("fill", function() { return pieChart.color(d.data.x); });
+		pieChart.circle.selectAll(".arc").attr("transform", "translate(0,0)");
+		pieChart.circle.selectAll(".arc").filter(function(x) { return x.data.x == d.data.x; })
+				.attr("transform", "translate(" + c[0] * pieChart.c1 + "," + c[1] * pieChart.c1 + ")");		
+		focus.style("display", null).attr("transform", "translate(" + c[0] * pieChart.c2 + "," + c[1] * pieChart.c2 + ")");		
+	    focus.select("text").text(d.data.y).style("text-anchor", c[0] > 0 ? "end" : "start");
 	});
 	g.on("mouseout", function(d) {
 		focus.style("display", "none");
-		pieChart.svg.selectAll(".arc").attr("transform", "translate(0,0)");
+		pieChart.circle.selectAll(".arc").attr("transform", "translate(0,0)");
 	});
-	g.append("path").attr("d", pieChart.arc).style("fill", function(d) { return pieChart.color(d.data.x); });
-	g.append("text").attr("dy", ".35em").attr("class", "pieChartArc")
+	g.append("path").attr("d", pieChart.arc).attr("data-legend", function(d) { return d.data.x; }).style("fill", function(d) { return pieChart.color(d.data.x); });
+	g.append("text").attr("class", "pieChartArc")
 				    .text(function(d) { return d.data.x; }).attr("transform", function(d) {
 		var c = pieChart.arc.centroid(d);
-		return "translate(" + parseFloat(c[0] * pieChart.c3) + "," + parseFloat(c[1] * pieChart.c3) + ") rotate(" + evam.radionToAngle((d.startAngle + d.endAngle) / 2, -90, 90) + ")";
+		var rotateAngle = evam.pieChartInnerTextAngle((d.startAngle + d.endAngle) / 2, -90, 90);
+		var translate = parseFloat(c[0] * pieChart.c3) + "," + parseFloat(c[1] * pieChart.c3);
+		return "translate(" + translate + ") rotate(" + rotateAngle + ")";
 	});			
-	var focus = pieChart.svg.append("g").attr("class", "focus").style("display", "none");				
-	focus.append("text");
+	var focus = pieChart.circle.append("g").attr("class", "focus").style("display", "none");				
+	focus.append("text");	
+	var legend = pieChart.svg.append("g").attr("class","legend").style("font-size", "12px").call(d3.legend);
+	legend.attr("transform","translate(" + (pieChart.outerWidth - legend.select("rect.legend-box").attr('width')) + "," + 20 + ")");
 };
 
 // Donut
 evam.Donutchart = function(options) {
 	evam.Piechart.call(this, options);
-	this.c2					= 1.5;
+	this.c1					= 0.06;
+	this.c2					= 1.4;
 	this.innerRadius		= this.radius / 2;
 };
 evam.Donutchart.prototype = Object.create(evam.Piechart.prototype);
+
+
+// initializer functions
+evam.initializePortlet = function(object) {
+	try {
+		// common options
+		var options = {
+			key: object.data('key'), 
+			title: object.data('title'), 
+			refreshInterval: object.data('refresh-interval'),
+			requestUrl: object.data('request-url')
+		};
+		
+		// type specific options
+		if(object.hasClass('linechart') ||
+		   object.hasClass('areachart') ||
+		   object.hasClass('multiserieslinechart'))
+		{
+			options.xAxis = object.data('x-axis');
+	   	   	options.yAxis = object.data('y-axis');
+	   	   	options.xAxisType = object.data('x-axis-type'); 
+	   	   	options.yAxisType = object.data('y-axis-type');
+	   	   	options.xAxisFormat = object.data('x-axis-format'); 
+	   	   	options.yAxisFormat = object.data('y-axis-format');
+	   	   	options.brush = object.data('brush');
+	   	   	options.interpolate = object.data('interpolate');
+		};
+		
+		// creation type
+		var creationFunction = null;
+		switch(object.data('type')) {
+		case 'textbox': creationFunction = evam.Textbox; break;
+		case 'selectbox': creationFunction = evam.Selectbox; break;
+		case 'datatable': creationFunction = evam.Datatable; break;
+		case 'linechart': creationFunction = evam.Linechart; break; 
+		case 'areachart': creationFunction = evam.Areachart; break;
+		case 'multiserieslinechart': creationFunction = evam.MultiSeriesLinechart; break;
+		case 'piechart': creationFunction = evam.Piechart; break;
+		case 'donutchart': creationFunction = evam.Donutchart; break;	
+		}
+		
+		// create
+		var chart = new creationFunction(options);
+		chart.initialize();
+		chart.update();	
+		object.bind('evam.resize', function() { chart.resize(); });
+		object.parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
+	}
+	catch(err) {
+		$(this).html("Cannot create portlet.\n --- Details --- \n" +
+				     err.message + "\n --- Trace ---\n" +
+					 printStackTrace().join("\n"));
+	}
+};

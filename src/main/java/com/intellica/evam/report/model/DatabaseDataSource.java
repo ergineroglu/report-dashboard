@@ -24,6 +24,23 @@ public class DatabaseDataSource implements DataSource {
 		this.queryTemplate = queryTemplate;
 		this.rdbmsDAO = new RDBMSDao();
 	}
+	
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData1D()
+	 */
+	@Override
+	public List<? extends GraphData> getData1D() {
+		return this.getData1D(new HashMap<String, String>());
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData1D(java.util.Map)
+	 */
+	@Override
+	public List<? extends GraphData> getData1D(Map<String, String> parameters) {
+		return this.rdbmsDAO.<String>executeQuery1D(this.queryTemplate, parameters);
+	}
+
 
 	/* (non-Javadoc)
 	 * @see com.intellica.evam.report.model.DataSource#getData2D()
@@ -38,7 +55,7 @@ public class DatabaseDataSource implements DataSource {
 	 */
 	@Override
 	public List<? extends GraphData> getData2D(Map<String, String> parameters) {
-		return this.rdbmsDAO.<String, String>executeQuery2D(this.queryTemplate);
+		return this.rdbmsDAO.<String, String>executeQuery2D(this.queryTemplate, parameters);
 	}
 
 	/* (non-Javadoc)
@@ -54,6 +71,22 @@ public class DatabaseDataSource implements DataSource {
 	 */
 	@Override
 	public List<? extends GraphData> getData3D(Map<String, String> parameters) {
-		return this.rdbmsDAO.<String, String, String>executeQuery3D(this.queryTemplate);
+		return this.rdbmsDAO.<String, String, String>executeQuery3D(this.queryTemplate, parameters);
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getDataMultipleD()
+	 */
+	@Override
+	public List<? extends GraphData> getDataMultipleD() {
+		return this.getDataMultipleD(new HashMap<String, String>());
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getDataMultipleD(java.util.Map)
+	 */
+	@Override
+	public List<? extends GraphData> getDataMultipleD(Map<String, String> parameters) {
+		return this.rdbmsDAO.executeQueryMultipleD(this.queryTemplate, parameters);
 	}
 }

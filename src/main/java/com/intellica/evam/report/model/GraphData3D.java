@@ -8,8 +8,7 @@ import java.io.Serializable;
  * Package: com.intellica.evam.report.model
  *
  */
-public class GraphData3D<X extends Serializable, Y extends Serializable, Z extends Serializable> 
-	   extends GraphData2D<X, Y> {
+public class GraphData3D<X extends Serializable, Y extends Serializable, Z extends Serializable> extends GraphData2D<X, Y> {
 	public Z z;
 	
 	public GraphData3D(X x, Y y, Z z) {		

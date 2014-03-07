@@ -1,7 +1,5 @@
 package com.intellica.evam.report.model;
 
-import java.io.Serializable;
-import java.util.List;
 
 /**
  * Author: eeroglu
@@ -9,12 +7,10 @@ import java.util.List;
  * Package: com.intellica.evam.report.model
  *
  */
-public class GraphDataMultipleD<K extends Serializable, V extends Serializable> implements GraphData {
-	public K x;
-	public List<V> listY;
+public class GraphDataMultipleD implements GraphData {
+	public Object[] data;
 	
-	public GraphDataMultipleD(K x, List<V> listY) {
-		this.x = x;
-		this.listY = listY;
+	public GraphDataMultipleD(Object[] data) {
+		this.data = data;	
 	}
 }

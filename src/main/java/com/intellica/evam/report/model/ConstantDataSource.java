@@ -26,6 +26,26 @@ public class ConstantDataSource implements DataSource {
 			dataRows.add(StringUtils.trimArrayElements(row.split(delimiter)));
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData1D()
+	 */
+	@Override
+	public List<? extends GraphData> getData1D() {
+		return this.getData1D(new HashMap<String, String>());
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getData1D(java.util.Map)
+	 */
+	@Override
+	public List<? extends GraphData> getData1D(Map<String, String> parameters) {
+		List<GraphData1D<String>> resultList = new ArrayList<GraphData1D<String>>();
+		for(String[] row: dataRows) {
+			resultList.add(new GraphData1D<String>(row[0]));
+		}
+		return resultList;
+	}
 
 	/* (non-Javadoc)
 	 * @see com.intellica.evam.report.model.DataSource#getData2D()
@@ -63,6 +83,26 @@ public class ConstantDataSource implements DataSource {
 		List<GraphData3D<String, String, String>> resultList = new ArrayList<GraphData3D<String, String, String>>();
 		for(String[] row: dataRows) {
 			resultList.add(new GraphData3D<String, String, String>(row[0], row[1], row[2]));
+		}
+		return resultList;
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getDataMultipleD()
+	 */
+	@Override
+	public List<? extends GraphData> getDataMultipleD() {
+		return this.getDataMultipleD(new HashMap<String, String>());
+	}
+
+	/* (non-Javadoc)
+	 * @see com.intellica.evam.report.model.DataSource#getDataMultipleD(java.util.Map)
+	 */
+	@Override
+	public List<? extends GraphData> getDataMultipleD(Map<String, String> parameters) {
+		List<GraphDataMultipleD> resultList = new ArrayList<GraphDataMultipleD>();
+		for(String[] row: dataRows) {
+			resultList.add(new GraphDataMultipleD(row));
 		}
 		return resultList;
 	}

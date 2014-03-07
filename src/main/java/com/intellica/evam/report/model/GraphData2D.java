@@ -8,12 +8,11 @@ import java.io.Serializable;
  * Package: com.intellica.evam.report.model
  *
  */
-public class GraphData2D<K extends Serializable, V extends Serializable> implements GraphData {
-	public K x;
-	public V y;
+public class GraphData2D<X extends Serializable, Y extends Serializable> extends GraphData1D<X> {
+	public Y y;
 	
-	public GraphData2D(K x, V y) {
-		this.x = x;
+	public GraphData2D(X x, Y y) {
+		super(x);
 		this.y = y;
 	}
 }

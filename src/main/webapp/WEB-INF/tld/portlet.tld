@@ -13,4 +13,10 @@
         <function-signature>java.lang.Integer widthClass( java.lang.Integer )</function-signature>
     </function>
     
+    <function>
+        <name>portletIcon</name>
+        <function-class>com.intellica.evam.report.jstl.PortletJSTLFunctions</function-class>
+        <function-signature>java.lang.String portletIcon( com.intellica.evam.report.util.PortletType )</function-signature>
+    </function>    
+    
 </taglib>

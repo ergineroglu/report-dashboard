@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib tagdir="/WEB-INF/tags" prefix="evam"%>
 <%@ taglib uri="/WEB-INF/tld/portlet.tld" prefix="portlet"%>
 
 <!DOCTYPE html>
@@ -67,111 +68,14 @@
 					<div class="tab-pane" id="${dashboardTab.tabKey}">
 						<div class="row">
 							<c:forEach items="${dashboardTab.tabPortlets}" var="dashboardPortlet">
-          						<c:set var="numberOfCols" value="${portlet:widthClass(dashboardPortlet.value.portletWidth)}" />
-          						<div class="col-md-${numberOfCols}" style="margin-bottom: 15px;">
-            						<div class="panel panel-primary">
-              							<div class="panel-heading">
-                							<h3 class="panel-title">
-                								<span class="glyphicon glyphicon-signal"></span> ${dashboardPortlet.value.portletTitle}
-                								<span title="Redraw Graph" class="refresh-graph pull-right btn btn-xs glyphicon glyphicon-refresh"></span>
-											</h3>
-           								</div>
-           								<div class="panel-body">
-											<c:if test="${dashboardPortlet.value.portletType.name == 'textbox'}">
-												<div class="input-group">
-													<input type="text" class="form-control" value="${dashboardPortlet.value.input}">
-													<span class="input-group-btn">
-	        											<button class="btn btn-primary" type="button">Update</button>
-	      											</span>
-												</div>
-											</c:if>
-											
-											<c:if test="${dashboardPortlet.value.portletType.name == 'areachart'}">
-												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
-												<div id="evam_drawing_${dashboardPortlet.key}" 
-													 class="evam_graph areachart"
-													 data-title="${dashboardPortlet.value.portletTitle}"
-													 data-key="${dashboardPortlet.key}"
-													 data-type="${dashboardPortlet.value.portletType.name}"
-													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}"
-													 data-request-url="${dashboardPortletUrl}"
-													 data-x-axis="${dashboardPortlet.value.axisXName}"
-													 data-y-axis="${dashboardPortlet.value.axisYName}"
-													 data-x-axis-type="${dashboardPortlet.value.axisXType}"
-													 data-y-axis-type="${dashboardPortlet.value.axisYType}"
-													 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
-													 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
-													 data-brush="${dashboardPortlet.value.brush}"
-													 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
-												</div>
-											</c:if>
-											
-											<c:if test="${dashboardPortlet.value.portletType.name == 'linechart'}">
-												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
-												<div id="evam_drawing_${dashboardPortlet.key}" 
-													 class="evam_graph linechart"
-													 data-title="${dashboardPortlet.value.portletTitle}"
-													 data-key="${dashboardPortlet.key}"
-													 data-type="${dashboardPortlet.value.portletType.name}"
-													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}"
-													 data-request-url="${dashboardPortletUrl}"
-													 data-x-axis="${dashboardPortlet.value.axisXName}"
-													 data-y-axis="${dashboardPortlet.value.axisYName}"
-													 data-x-axis-type="${dashboardPortlet.value.axisXType}"
-													 data-y-axis-type="${dashboardPortlet.value.axisYType}"
-													 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
-													 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
-													 data-brush="${dashboardPortlet.value.brush}"
-													 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
-												</div>
-											</c:if>
-											
-											<c:if test="${dashboardPortlet.value.portletType.name == 'piechart'}">
-												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
-												<div id="evam_drawing_${dashboardPortlet.key}" 
-													 class="evam_graph piechart"
-													 data-title="${dashboardPortlet.value.portletTitle}"
-													 data-key="${dashboardPortlet.key}"
-													 data-type="${dashboardPortlet.value.portletType.name}"
-													 data-request-url="${dashboardPortletUrl}"
-													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}">
-												</div>
-											</c:if>
-											
-											<c:if test="${dashboardPortlet.value.portletType.name == 'donutchart'}">
-												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
-												<div id="evam_drawing_${dashboardPortlet.key}" 
-													 class="evam_graph donutchart"
-													 data-title="${dashboardPortlet.value.portletTitle}"
-													 data-key="${dashboardPortlet.key}"
-													 data-type="${dashboardPortlet.value.portletType.name}"
-													 data-request-url="${dashboardPortletUrl}"
-													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}">
-												</div>
-											</c:if>
-											
-											<c:if test="${dashboardPortlet.value.portletType.name == 'multiserieslinechart'}">
-												<c:url var="dashboardPortletUrl" value="/data/${userId}/${dashboardTab.tabKey}/${dashboardPortlet.key}" />
-												<div id="evam_drawing_${dashboardPortlet.key}" 
-													 class="evam_graph multiserieslinechart"
-													 data-title="${dashboardPortlet.value.portletTitle}"
-													 data-key="${dashboardPortlet.key}"
-													 data-type="${dashboardPortlet.value.portletType.name}"
-													 data-refresh-interval="${dashboardPortlet.value.refreshInterval}"
-													 data-request-url="${dashboardPortletUrl}"
-													 data-x-axis="${dashboardPortlet.value.axisXName}"
-													 data-y-axis="${dashboardPortlet.value.axisYName}"
-													 data-x-axis-type="${dashboardPortlet.value.axisXType}"
-													 data-y-axis-type="${dashboardPortlet.value.axisYType}"
-													 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
-													 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
-													 data-brush="${dashboardPortlet.value.brush}"													 
-													 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
-												</div>
-											</c:if>
-										</div>
-            						</div>
-          						</div>
+								<c:set var="numberOfCols" value="${portlet:widthClass(dashboardPortlet.value.portletWidth)}" />
+								<c:set var="portletIcon" value="${portlet:portletIcon(dashboardPortlet.value.portletType)}" />
+								<evam:portlet userId="${userId}"
+											  dashboardTab="${dashboardTab}"
+											  dashboardPortlet="${dashboardPortlet}"
+											  portletIcon="${portletIcon}"
+											  numberOfCols="${numberOfCols}">
+								</evam:portlet>
 							</c:forEach>
 						</div>
 					</div>
@@ -189,112 +93,30 @@
 	<script type="text/javascript" src="<c:url value="/static/js/bootstrap-datepicker.js" />"></script>		
 	<script type="text/javascript" src="<c:url value="/static/js/bootstrap-typeahead.js" />"></script>	
 	<script type="text/javascript" src="<c:url value="/static/js/bootbox.min.js" />"></script>
+	<script type="text/javascript" src="<c:url value="/static/js/stacktrace.js" />"></script>
 	<script type="text/javascript" src="<c:url value="/static/js/d3.v3.js" />"></script>
 	<script type="text/javascript" src="<c:url value="/static/js/d3.legend.js" />"></script>	
 	<script type="text/javascript" src="<c:url value="/static/js/evam.drawing.js" />"></script>
 
 	<script type="text/javascript">
 		$(function() {
+			// initialize portlets if first opening of tab
+			$("#dashboardTabs li > a[data-toggle='tab']").on('shown.bs.tab', function(e) {
+				var tabPane = $($(e.target).attr('href'));
+				if(! tabPane.hasClass('initialized')) {
+					var portletList = tabPane.find(".evam_graph");
+					portletList.each(function() { evam.initializePortlet($(this)); });
+					$(window).resize(function(){ portletList.trigger('evam.resize'); });
+					tabPane.addClass('initialized');
+				}				
+			});
+			
 			// select first tab
 			if($("#dashboardTabs li.active > a[data-toggle='tab']").length <= 0) {
 				$("#dashboardTabs li:first > a[data-toggle='tab']").trigger('click');
 				$("#dashboardTabs li:first").addClass('active');
 				$($("#dashboardTabs li:first > a[data-toggle='tab']").attr('href')).addClass('active');
-			}	
-			
-			$(".evam_graph.linechart").each(function() {
-				var options = {
-					key: $(this).data('key'), 
-					title: $(this).data('title'), 
-					refreshInterval: $(this).data('refresh-interval'),
-					requestUrl: $(this).data('request-url'),
-   			   	   	xAxis: $(this).data('x-axis'), 
-   			   	   	yAxis: $(this).data('y-axis'),
-   			   		xAxisType: $(this).data('x-axis-type'), 
-			   	   	yAxisType: $(this).data('y-axis-type'),
-			   	 	xAxisFormat: $(this).data('x-axis-format'), 
-			   	   	yAxisFormat: $(this).data('y-axis-format'),
-   			   	   	brush: $(this).data('brush'),
-   			   		interpolate: $(this).data('interpolate')
-				};
-				var chart = new evam.Linechart(options);
-				chart.initialize();
-				chart.update();	
-				$(this).bind('evam.resize', function() { chart.resize(); });
-				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
-			});
-			$(".evam_graph.areachart").each(function() {
-				var options = {
-					key: $(this).data('key'), 
-					title: $(this).data('title'), 
-					refreshInterval: $(this).data('refresh-interval'),
-					requestUrl: $(this).data('request-url'),
-   			   	   	xAxis: $(this).data('x-axis'), 
-   			   	   	yAxis: $(this).data('y-axis'), 
-   			   		xAxisType: $(this).data('x-axis-type'), 
-		   	   		yAxisType: $(this).data('y-axis-type'),
-		   	 		xAxisFormat: $(this).data('x-axis-format'), 
-		   	   		yAxisFormat: $(this).data('y-axis-format'),
-   			   	   	brush: $(this).data('brush'),
-   			   		interpolate: $(this).data('interpolate')
-				};
-				var chart = new evam.Areachart(options);
-				chart.initialize();
-				chart.update();	
-				$(this).bind('evam.resize', function() { chart.resize(); });
-				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
-			});
-			$(".evam_graph.multiserieslinechart").each(function() {
-				var options = {
-					key: $(this).data('key'), 
-					title: $(this).data('title'), 
-					refreshInterval: $(this).data('refresh-interval'),
-					requestUrl: $(this).data('request-url'),
-   			   	   	xAxis: $(this).data('x-axis'), 
-   			   	   	yAxis: $(this).data('y-axis'), 
-   			   		xAxisType: $(this).data('x-axis-type'), 
-		   	   		yAxisType: $(this).data('y-axis-type'),
-		   	 		xAxisFormat: $(this).data('x-axis-format'), 
-		   	   		yAxisFormat: $(this).data('y-axis-format'), 
-		   	   		brush: $(this).data('brush'),
-   			   		interpolate: $(this).data('interpolate')
-				};
-				var chart = new evam.MultiSeriesLinechart(options);
-				chart.initialize();
-				chart.update();	
-				$(this).bind('evam.resize', function() { chart.resize(); });
-				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
-			});
-			$(".evam_graph.piechart").each(function() {
-				var options = {
-					key: $(this).data('key'), 
-					title: $(this).data('title'), 
-					refreshInterval: $(this).data('refresh-interval'),
-					requestUrl: $(this).data('request-url')
-				};
-				var chart = new evam.Piechart(options);
-				chart.initialize();
-				chart.update();	
-				$(this).bind('evam.resize', function() { chart.resize(); });
-				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
-			});
-			$(".evam_graph.donutchart").each(function() {
-				var options = {
-					key: $(this).data('key'), 
-					title: $(this).data('title'), 
-					refreshInterval: $(this).data('refresh-interval'),
-					requestUrl: $(this).data('request-url')
-				};
-				var chart = new evam.Donutchart(options);
-				chart.initialize();
-				chart.update();	
-				$(this).bind('evam.resize', function() { chart.resize(); });
-				$(this).parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
-			});
-			
-			$(window).resize(function(){
-				$(".evam_graph").trigger('evam.resize');
-			});			
+			}
 		});
 	</script>
 </body>

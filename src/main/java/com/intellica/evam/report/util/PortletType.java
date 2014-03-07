@@ -7,9 +7,9 @@ package com.intellica.evam.report.util;
  *
  */
 public enum PortletType {
-	TEXT_BOX("textbox"),
+	TEXT_BOX("textbox"),	
 	SELECT_BOX("selectbox"),
-	RADIO_BUTTON("radiobutton"),
+	DATA_TABLE("datatable"),
 	LINE_CHART("linechart"),
 	MULTISERIES_LINE_CHART("multiserieslinechart"),
 	AREA_CHART("areachart"),
