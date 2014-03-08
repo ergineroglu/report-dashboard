@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * Author: eeroglu
  * Date: 11 Şub 2014 12:43:48
- * Package: com.intellica.evam.model
+ * Package: com.intellica.evam.report.model
  *
  */
 public class DashboardTab {

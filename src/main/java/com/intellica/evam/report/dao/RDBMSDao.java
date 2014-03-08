@@ -11,11 +11,12 @@ import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
+import org.apache.commons.lang3.text.StrSubstitutor;
 
-import com.intellica.evam.report.model.GraphData1D;
-import com.intellica.evam.report.model.GraphData2D;
-import com.intellica.evam.report.model.GraphData3D;
-import com.intellica.evam.report.model.GraphDataMultipleD;
+import com.intellica.evam.report.data.GraphData1D;
+import com.intellica.evam.report.data.GraphData2D;
+import com.intellica.evam.report.data.GraphData3D;
+import com.intellica.evam.report.data.GraphDataMultipleD;
 
 /**
  * Author: eeroglu
@@ -43,10 +44,9 @@ public class RDBMSDao {
     		tx = session.beginTransaction();    		
  
     		// create hibernate query and set parameters
+    		StrSubstitutor strSubstitutor = new StrSubstitutor(queryParameters, "${", "}");
+    		queryString = strSubstitutor.replace(queryString);    		
     		final org.hibernate.Query query = session.createSQLQuery(queryString);
-    		for(Map.Entry<String, String> entry : queryParameters.entrySet()) {
-    			query.setParameter(entry.getKey(), entry.getValue());
-    		}
     		
     		// execute query
     		@SuppressWarnings("unchecked")

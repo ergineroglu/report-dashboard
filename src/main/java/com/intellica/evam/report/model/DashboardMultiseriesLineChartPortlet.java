@@ -1,5 +1,6 @@
 package com.intellica.evam.report.model;
 
+import com.intellica.evam.report.data.source.DataSource;
 import com.intellica.evam.report.util.PortletType;
 
 /**
@@ -26,8 +27,9 @@ public class DashboardMultiseriesLineChartPortlet extends DashboardLineChartPort
 										  	    String portletKey, 
 										  	    String portletTitle, 
 										  	    Integer portletWidth,
-										  	    Integer refreshInterval) {
-		super(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+										  	    Integer refreshInterval,
+										  	    Boolean autoStart) {
+		super(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		this.setPortletType(PortletType.MULTISERIES_LINE_CHART); 
 	}
 }

@@ -1,11 +1,12 @@
 package com.intellica.evam.report.model;
 
+import com.intellica.evam.report.data.source.DataSource;
 import com.intellica.evam.report.util.PortletType;
 
 /**
  * Author: eeroglu
  * Date: 11 Şub 2014 12:46:42
- * Package: com.intellica.evam.model
+ * Package: com.intellica.evam.report.model
  *
  */
 public class DashboardPortlet {
@@ -14,7 +15,8 @@ public class DashboardPortlet {
 	private String portletTitle;
 	private PortletType portletType;
 	private Integer portletWidth; // width by percent of a row - min 1 - max 100 - default 50
-	private Integer refreshInterval; // in seconds 		
+	private Integer refreshInterval; // in seconds 	
+	private Boolean autoStart;
 	
 	public DashboardPortlet(PortletType portletType) {
 		this.portletType = portletType; 
@@ -25,13 +27,15 @@ public class DashboardPortlet {
 							String portletKey, 
 							String portletTitle,
 							Integer portletWidth,
-							Integer refreshInterval) {
+							Integer refreshInterval,
+							Boolean autoStart) {
 		this.portletType = portletType; 
 		this.dataSource = dataSource;
 		this.portletKey = portletKey;
 		this.portletTitle = portletTitle;
 		this.portletWidth = portletWidth;
 		this.refreshInterval = refreshInterval;
+		this.autoStart = autoStart;
 	}
 	
 	/**
@@ -107,6 +111,20 @@ public class DashboardPortlet {
 	 */
 	public void setRefreshInterval(Integer refreshInterval) {
 		this.refreshInterval = refreshInterval;
+	}
+
+	/**
+	 * @return the autoStart
+	 */
+	public Boolean getAutoStart() {
+		return autoStart;
+	}
+
+	/**
+	 * @param autoStart the autoStart to set
+	 */
+	public void setAutoStart(Boolean autoStart) {
+		this.autoStart = autoStart;
 	}
 	
 }

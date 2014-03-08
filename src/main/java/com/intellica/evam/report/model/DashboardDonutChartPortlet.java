@@ -1,5 +1,6 @@
 package com.intellica.evam.report.model;
 
+import com.intellica.evam.report.data.source.DataSource;
 import com.intellica.evam.report.util.PortletType;
 
 /**
@@ -18,7 +19,8 @@ public class DashboardDonutChartPortlet extends DashboardPortlet {
 									  String portletKey, 								   	  
 									  String portletTitle,
 								   	  Integer portletWidth,
-								   	  Integer refreshInterval) {
-		super(PortletType.DONUT_CHART, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+								   	  Integer refreshInterval,
+								   	  Boolean autoStart) {
+		super(PortletType.DONUT_CHART, dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 	}
 }

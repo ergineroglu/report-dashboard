@@ -31,19 +31,21 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.intellica.evam.report.model.ConstantDataSource;
+import com.intellica.evam.report.data.source.ConstantDataSource;
+import com.intellica.evam.report.data.source.DataSource;
+import com.intellica.evam.report.data.source.DatabaseDataSource;
 import com.intellica.evam.report.model.DashboardAreaChartPortlet;
 import com.intellica.evam.report.model.DashboardDataTablePortlet;
+import com.intellica.evam.report.model.DashboardDonutChartPortlet;
+import com.intellica.evam.report.model.DashboardInputPortlet;
+import com.intellica.evam.report.model.DashboardInteraction;
 import com.intellica.evam.report.model.DashboardLineChartPortlet;
 import com.intellica.evam.report.model.DashboardMultiseriesLineChartPortlet;
-import com.intellica.evam.report.model.DashboardDonutChartPortlet;
 import com.intellica.evam.report.model.DashboardPieChartPortlet;
 import com.intellica.evam.report.model.DashboardPortlet;
 import com.intellica.evam.report.model.DashboardSelectBoxPortlet;
 import com.intellica.evam.report.model.DashboardTab;
 import com.intellica.evam.report.model.DashboardTextboxPortlet;
-import com.intellica.evam.report.model.DataSource;
-import com.intellica.evam.report.model.DatabaseDataSource;
 import com.intellica.evam.report.service.PortletCacheService;
 import com.intellica.evam.report.util.DataSourceType;
 import com.intellica.evam.report.util.ParserUtils;
@@ -138,13 +140,14 @@ public class PanelController {
 		// optional fields
 		Integer portletWidth = ParserUtils.readSingleTagValueInteger(portletElement, "width", 50);		
 		Integer refreshInterval = ParserUtils.readSingleTagValueInteger(portletElement, "refreshInterval", -1);
+		Boolean autoStart = ParserUtils.readSingleTagValueBoolean(portletElement, "autoStart", true);
 		
 		// data source
 		Element dataSourceElement = (Element) portletElement.getElementsByTagName("data-source").item(0);
 		DataSource dataSource = this.parseDataSource(dataSourceElement);
 		
 		// type specific fields and portlet creation
-		DashboardPortlet portlet = this.portletFactory(portletType, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+		DashboardPortlet portlet = this.portletFactory(portletType, dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		switch(portletType) {
 		case LINE_CHART:
 		case MULTISERIES_LINE_CHART:
@@ -167,6 +170,17 @@ public class PanelController {
 			if(columnNamesTags.getLength() > 0) {
 				tablePortlet.setColumnNames(ParserUtils.readMultipleTagValueString((Element) columnNamesTags.item(0), "column").toArray(new String[0]));
 			}
+			break;
+		case TEXT_BOX:
+		case SELECT_BOX:
+			DashboardInputPortlet inputPortlet = (DashboardInputPortlet) portlet;
+			// optional fields			
+			NodeList interactionsTags = portletElement.getElementsByTagName("interactions");
+			if(interactionsTags.getLength() > 0) {
+				List<DashboardInteraction> interactionList = this.parseInteractions((Element) interactionsTags.item(0));
+				inputPortlet.setInteractions(interactionList);
+			}
+			break;
 		default:
 			break;
 		}
@@ -179,17 +193,18 @@ public class PanelController {
 											String portletKey, 
 											String portletTitle, 
 											Integer portletWidth,
-											Integer refreshInterval)
+											Integer refreshInterval,
+											Boolean autoStart)
 	{
 		switch (portletType) {
-		case TEXT_BOX: return new DashboardTextboxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval);
-		case SELECT_BOX: return new DashboardSelectBoxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval);
-		case DATA_TABLE: return new DashboardDataTablePortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
-		case LINE_CHART: return new DashboardLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
-		case MULTISERIES_LINE_CHART: return new DashboardMultiseriesLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
-		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);		
-		case PIE_CHART: return new DashboardPieChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
-		case DONUT_CHART: return new DashboardDonutChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+		case TEXT_BOX: return new DashboardTextboxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval, autoStart);
+		case SELECT_BOX: return new DashboardSelectBoxPortlet(dataSource, portletKey,portletTitle, portletWidth, refreshInterval, autoStart);
+		case DATA_TABLE: return new DashboardDataTablePortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
+		case LINE_CHART: return new DashboardLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
+		case MULTISERIES_LINE_CHART: return new DashboardMultiseriesLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
+		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);		
+		case PIE_CHART: return new DashboardPieChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
+		case DONUT_CHART: return new DashboardDonutChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		default: return null;
 		}
 	}
@@ -211,5 +226,21 @@ public class PanelController {
 		default:
 			return null;
 		}
+	}
+	
+	private List<DashboardInteraction> parseInteractions(Element interactionsElement) {
+		List<DashboardInteraction> interactions = new ArrayList<DashboardInteraction>();
+		NodeList interactionTags = interactionsElement.getElementsByTagName("interaction");
+		for(int i = 0; i < interactionTags.getLength(); i++) {
+			// interaction fields
+			Element interactionElement = (Element) interactionTags.item(i);
+			String tabKey = ParserUtils.readSingleTagValueString(interactionElement, "tab-key");
+			String portletKey = ParserUtils.readSingleTagValueString(interactionElement, "portlet-key");
+			String variable = ParserUtils.readSingleTagValueString(interactionElement, "variable");
+			Boolean trigger = ParserUtils.readSingleTagValueBoolean(interactionElement, "trigger", true);
+			interactions.add(new DashboardInteraction(tabKey, portletKey, variable, trigger));
+		}
+		
+		return interactions;
 	}
 }

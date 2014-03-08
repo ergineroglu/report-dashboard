@@ -17,6 +17,7 @@
 		<jackson-jax-version>1.9.13</jackson-jax-version>
 		<org.slf4j-version>1.6.6</org.slf4j-version>
 		<log4j-version>1.2.17</log4j-version>
+		<apache-commons-lang3-version>3.2.1</apache-commons-lang3-version>
 	</properties>
 	<repositories>
    		<repository>
@@ -103,6 +104,14 @@
 			<artifactId>jackson-jaxrs</artifactId>
 			<version>${jackson-jax-version}</version>
 		</dependency>
+		
+		<!-- Apache Commons -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${apache-commons-lang3-version}</version>
+		</dependency>
+            
 				
 		<!-- Logging -->
 		<dependency>

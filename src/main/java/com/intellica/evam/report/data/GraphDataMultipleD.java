@@ -1,4 +1,4 @@
-package com.intellica.evam.report.model;
+package com.intellica.evam.report.data;
 
 
 /**

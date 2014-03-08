@@ -19,6 +19,8 @@ public class PortletJSTLFunctions {
 		case TEXT_BOX:
 		case SELECT_BOX:
 			return "glyphicon-edit";
+		case DATA_TABLE:
+			return "glyphicon-th";
 		case LINE_CHART:
 		case AREA_CHART:
 		case MULTISERIES_LINE_CHART:

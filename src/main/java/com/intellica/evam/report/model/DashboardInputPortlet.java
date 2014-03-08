@@ -1,5 +1,9 @@
 package com.intellica.evam.report.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.intellica.evam.report.data.source.DataSource;
 import com.intellica.evam.report.util.PortletType;
 
 /**
@@ -10,10 +14,11 @@ import com.intellica.evam.report.util.PortletType;
  */
 public class DashboardInputPortlet extends DashboardPortlet {
 
-	private String input;
+	private List<DashboardInteraction> interactions;
 	
 	public DashboardInputPortlet(PortletType type) {
-		super(type);		
+		super(type);
+		this.setInteractions(new ArrayList<DashboardInteraction>());
 	}
 	
 	public DashboardInputPortlet(PortletType type,
@@ -21,22 +26,24 @@ public class DashboardInputPortlet extends DashboardPortlet {
 								 String portletKey, 
 								 String portletTitle,
 								 Integer portletWidth,
-								 Integer refreshInterval) {
-		super(type, dataSource, portletKey, portletTitle, portletWidth, refreshInterval);
+								 Integer refreshInterval,
+								 Boolean autoStart) {
+		super(type, dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
+		this.setInteractions(new ArrayList<DashboardInteraction>());
 	}
 
 	/**
-	 * @return the input
+	 * @return the interactions
 	 */
-	public String getInput() {
-		return input;
+	public List<DashboardInteraction> getInteractions() {
+		return interactions;
 	}
 
 	/**
-	 * @param input the input to set
+	 * @param interactions the interactions to set
 	 */
-	public void setInput(String input) {
-		this.input = input;
+	public void setInteractions(List<DashboardInteraction> interactions) {
+		this.interactions = interactions;
 	}
 
 }

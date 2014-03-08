@@ -108,6 +108,8 @@ evam.Graph = function(options){
 	this.requestData		= options.requestData || {};	
 	this.spinner			= new Spinner(evam.spinnerOptions);	
 	this.updateTimerId		= null;
+	// store portlet as data
+	this.parentObject.data('portlet-object', this);
 };
 evam.Graph.prototype.initialize = function() {};
 evam.Graph.prototype.prepareData = function(data) {};
@@ -119,24 +121,24 @@ evam.Graph.prototype.update = function() {
 	chart.updateTimerId = null;
 	// start request
 	chart.startSpinner();
-	d3.json(chart.requestUrl, function(error, data) {
-		if (error) console.warn(error);
-		else {
-			try {
-				chart.prepareData(data);
-				chart.draw(data);
-			}
-			catch(err) {
-				console.error(err);
-			}
-		}		
-		chart.stopSpinner();
-		if(chart.refreshInterval > 0) {		
-			chart.updateTimerId = setTimeout(function(){ chart.update(); }, chart.refreshInterval * 1000);
-		}
-	})
-	.header("Content-Type","application/x-www-form-urlencoded")
-    .send("POST");
+	d3.json(chart.requestUrl)
+	  .header("Content-Type","application/json")
+	  .post(JSON.stringify(chart.requestData), function(error, data) {
+		  if (error) console.warn(error);
+		  else {
+			  try {
+				  chart.prepareData(data);
+				  chart.draw(data);
+			  }
+			  catch(err) {
+				  console.error(err);
+			  }
+		  }		
+		  chart.stopSpinner();
+		  if(chart.refreshInterval > 0) {		
+			  chart.updateTimerId = setTimeout(function(){ chart.update(); }, chart.refreshInterval * 1000);
+		  }
+	  });
 };
 evam.Graph.prototype.startSpinner = function() {
 	this.spinner.spin(this.parentObject[0]);
@@ -148,12 +150,39 @@ evam.Graph.prototype.resize = function() {
     this.parentObject.children('svg').attr("width", this.parentObject.width()).attr("height", this.parentObject.height());	
 };
 
+// Input
+evam.Input = function(options){ 
+	evam.Graph.call(this, options);	
+	this.interactions		= options.interactions || [];
+	this.updateButton 		= this.parentObject.find('button.update');
+}; 
+evam.Input.prototype = Object.create(evam.Graph.prototype);
+evam.Input.prototype.getInput = function() {return "";};
+evam.Input.prototype.initialize = function() { 
+	var inputPortlet 		= this;
+	this.updateButton.click(function() {
+		$.each(inputPortlet.interactions, function(index, val) {
+			// find portlet
+			var portletObject = $("#" + val.tabKey + " #evam_drawing_" + val.portletKey).data('portlet-object');
+			if(portletObject) {
+				portletObject.requestData[val.variable] = inputPortlet.getInput();
+				if(val.trigger) {
+					portletObject.update();
+				}
+			}
+		});		
+	});
+};
+
 // Text Box
 evam.Textbox = function(options){ 
-	evam.Graph.call(this, options);	
+	evam.Input.call(this, options);	
 	this.textBox 			= this.parentObject.find('input[type="text"]');
 };
-evam.Textbox.prototype = Object.create(evam.Graph.prototype);
+evam.Textbox.prototype = Object.create(evam.Input.prototype);
+evam.Textbox.prototype.getInput = function() {
+	return this.textBox.val();
+};
 evam.Textbox.prototype.prepareData = function(data) {
 	this.textBox.typeahead({
 		items: 5,
@@ -164,13 +193,16 @@ evam.Textbox.prototype.prepareData = function(data) {
 
 // Select Box
 evam.Selectbox = function(options){ 
-	evam.Graph.call(this, options);	
+	evam.Input.call(this, options);	
 	this.selectBox 			= this.parentObject.find('select');
 };
-evam.Selectbox.prototype = Object.create(evam.Graph.prototype);
+evam.Selectbox.prototype = Object.create(evam.Input.prototype);
+evam.Selectbox.prototype.getInput = function() {
+	return this.selectBox.val();
+};
 evam.Selectbox.prototype.prepareData = function(data) {
 	var selectObj 			= this;
-	var previousValue		= selectObj.selectBox.val();
+	var previousValue		= selectObj.getInput();
 	selectObj.selectBox.find('option.generated').remove();
 	$.each(data, function(i, val) {
 		$("<option class='generated' value='" + val.x + "'>" + val.y + "</option>").appendTo(selectObj.selectBox);
@@ -529,8 +561,9 @@ evam.initializePortlet = function(object) {
 			key: object.data('key'), 
 			title: object.data('title'), 
 			refreshInterval: object.data('refresh-interval'),
-			requestUrl: object.data('request-url')
+			requestUrl: object.data('request-url')			
 		};
+		var autoStart = object.data('auto-start');
 		
 		// type specific options
 		if(object.hasClass('linechart') ||
@@ -545,7 +578,12 @@ evam.initializePortlet = function(object) {
 	   	   	options.yAxisFormat = object.data('y-axis-format');
 	   	   	options.brush = object.data('brush');
 	   	   	options.interpolate = object.data('interpolate');
-		};
+		}
+		else if(object.hasClass('textbox') ||
+			    object.hasClass('selectbox'))
+		{
+			options.interactions = object.data('interactions');
+		}
 		
 		// creation type
 		var creationFunction = null;
@@ -563,7 +601,7 @@ evam.initializePortlet = function(object) {
 		// create
 		var chart = new creationFunction(options);
 		chart.initialize();
-		chart.update();	
+		if(autoStart) chart.update();	
 		object.bind('evam.resize', function() { chart.resize(); });
 		object.parents(".panel").find('.btn.refresh-graph').click(function() { chart.update(); });
 	}

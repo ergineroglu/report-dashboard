@@ -10,18 +10,20 @@ package com.intellica.evam.report.controller;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.intellica.evam.report.data.GraphData;
 import com.intellica.evam.report.model.DashboardPortlet;
-import com.intellica.evam.report.model.GraphData;
 import com.intellica.evam.report.service.PortletCacheService;
 import com.intellica.evam.report.util.ResourceNotFoundException;
 
@@ -36,7 +38,8 @@ public class DataController {
 	@RequestMapping(value = "/data/{userId}/{tabKey}/{portletKey}", method = RequestMethod.POST)
 	public @ResponseBody GraphData[] data(@PathVariable int userId, 
 					 		  		   	  @PathVariable String tabKey, 
-					 		  		   	  @PathVariable String portletKey) {
+					 		  		   	  @PathVariable String portletKey,
+					 		  		   	  @RequestBody Map<String, String> dataParameters) {
 		
 		try {
 			// get portlet
@@ -55,16 +58,16 @@ public class DataController {
 			case PIE_CHART:
 			case DONUT_CHART:
 			case SELECT_BOX:
-				responseList = portlet.getDataSource().getData2D();
+				responseList = portlet.getDataSource().getData2D(dataParameters);
 				break;
 			case MULTISERIES_LINE_CHART:
-				responseList = portlet.getDataSource().getData3D();
+				responseList = portlet.getDataSource().getData3D(dataParameters);
 				break;
 			case DATA_TABLE:
-				responseList = portlet.getDataSource().getDataMultipleD();
+				responseList = portlet.getDataSource().getDataMultipleD(dataParameters);
 				break;
 			default:
-				responseList = new ArrayList();
+				responseList = new ArrayList<GraphData>();
 				break;
 			}
 			

@@ -1,30 +1,29 @@
-package com.intellica.evam.report.model;
+package com.intellica.evam.report.data.source;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.util.StringUtils;
+import com.intellica.evam.report.dao.RDBMSDao;
+import com.intellica.evam.report.data.GraphData;
 
 /**
  * Author: eeroglu
- * Date: 24 Şub 2014 10:45:19
+ * Date: 24 Şub 2014 09:19:04
  * Package: com.intellica.evam.report.model
  *
  */
-public class ConstantDataSource implements DataSource {
+public class DatabaseDataSource implements DataSource {
 
-	private List<String[]> dataRows;
+	private String queryTemplate;
+	private RDBMSDao rdbmsDAO;
 	
 	/**
 	 * 
 	 */
-	public ConstantDataSource(String delimiter, List<String> rows) {
-		this.dataRows = new ArrayList<String[]>();
-		for(String row : rows) {
-			dataRows.add(StringUtils.trimArrayElements(row.split(delimiter)));
-		}
+	public DatabaseDataSource(String queryTemplate) {
+		this.queryTemplate = queryTemplate;
+		this.rdbmsDAO = new RDBMSDao();
 	}
 	
 	/* (non-Javadoc)
@@ -40,12 +39,9 @@ public class ConstantDataSource implements DataSource {
 	 */
 	@Override
 	public List<? extends GraphData> getData1D(Map<String, String> parameters) {
-		List<GraphData1D<String>> resultList = new ArrayList<GraphData1D<String>>();
-		for(String[] row: dataRows) {
-			resultList.add(new GraphData1D<String>(row[0]));
-		}
-		return resultList;
+		return this.rdbmsDAO.<String>executeQuery1D(this.queryTemplate, parameters);
 	}
+
 
 	/* (non-Javadoc)
 	 * @see com.intellica.evam.report.model.DataSource#getData2D()
@@ -60,11 +56,7 @@ public class ConstantDataSource implements DataSource {
 	 */
 	@Override
 	public List<? extends GraphData> getData2D(Map<String, String> parameters) {
-		List<GraphData2D<String, String>> resultList = new ArrayList<GraphData2D<String, String>>();
-		for(String[] row: dataRows) {
-			resultList.add(new GraphData2D<String, String>(row[0], row[1]));
-		}
-		return resultList;
+		return this.rdbmsDAO.<String, String>executeQuery2D(this.queryTemplate, parameters);
 	}
 
 	/* (non-Javadoc)
@@ -76,15 +68,11 @@ public class ConstantDataSource implements DataSource {
 	}
 
 	/* (non-Javadoc)
-	 * @see com.intellica.evam.report.model.DataSource#getData3D(java.util.Map)
+	 * @see com.intellica.evam.report.model.DataSource#getData2D(java.util.Map)
 	 */
 	@Override
 	public List<? extends GraphData> getData3D(Map<String, String> parameters) {
-		List<GraphData3D<String, String, String>> resultList = new ArrayList<GraphData3D<String, String, String>>();
-		for(String[] row: dataRows) {
-			resultList.add(new GraphData3D<String, String, String>(row[0], row[1], row[2]));
-		}
-		return resultList;
+		return this.rdbmsDAO.<String, String, String>executeQuery3D(this.queryTemplate, parameters);
 	}
 
 	/* (non-Javadoc)
@@ -100,10 +88,6 @@ public class ConstantDataSource implements DataSource {
 	 */
 	@Override
 	public List<? extends GraphData> getDataMultipleD(Map<String, String> parameters) {
-		List<GraphDataMultipleD> resultList = new ArrayList<GraphDataMultipleD>();
-		for(String[] row: dataRows) {
-			resultList.add(new GraphDataMultipleD(row));
-		}
-		return resultList;
+		return this.rdbmsDAO.executeQueryMultipleD(this.queryTemplate, parameters);
 	}
 }
