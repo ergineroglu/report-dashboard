@@ -13,6 +13,8 @@ public enum PortletType {
 	LINE_CHART("linechart"),
 	MULTISERIES_LINE_CHART("multiserieslinechart"),
 	AREA_CHART("areachart"),
+	BAR_CHART("barchart"),
+	GROUP_BAR_CHART("groupbarchart"),
 	DONUT_CHART("donutchart"),
 	PIE_CHART("piechart");
 	

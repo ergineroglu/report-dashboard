@@ -30,11 +30,12 @@ evam.selectParseFormat = function(type, extraFormat) {
 		return d3.time.format(extraFormat).parse;
 	}
 };
-evam.selectScaleFormat = function(type, range) {
+evam.selectScaleFormat = function(type, range, rangePadding) {
 	switch(type) {
 	case 'string':
 	default:
-		var ordinal_scale = d3.scale.ordinal().rangePoints(range);
+		rangePadding = rangePadding || 0;
+		var ordinal_scale = d3.scale.ordinal().rangePoints(range, rangePadding);
 		ordinal_scale.invert = function(e) {
 			var d = this.domain();
 	        var r = this.range(); 
@@ -245,20 +246,7 @@ evam.XYchart = function(options){
 	this.width 				= this.outerWidth - this.margin.left - this.margin.right;
     this.height 			= this.outerHeight - this.margin.top - this.margin.bottom;    
     this.bisectY 			= d3.bisector(function(d) { return d.x; }).left;   
-};
-evam.XYchart.prototype = Object.create(evam.Graph.prototype);
-evam.XYchart.prototype.initialize = function() { 
-	this.x 					= evam.selectScaleFormat(this.xAxisType, [0, this.width]);
-	this.y 					= evam.selectScaleFormat(this.yAxisType, [this.height, 0]);
-	this.xAxis 				= d3.svg.axis().scale(this.x).orient("bottom").tickSize(-this.height).tickPadding(10).tickFormat(this.tickFormatX).tickSubdivide(true);
-	this.yAxis 				= d3.svg.axis().scale(this.y).orient("left").tickSize(-this.width).tickFormat(this.tickFormatY).tickSubdivide(true);
-};
-
-// Line Chart
-evam.Linechart = function(options){ 
-	evam.XYchart.call(this, options);
-	this.interpolate		= options.interpolate || 'linear';
-	this.hasBrush			= options.brush;
+    this.hasBrush			= options.brush;
 	if(this.hasBrush) {
 		this.margin 		= {top: 5, right: 20, bottom: 100, left: 45};
 		this.margin2 		= {top: 430, right: 20, bottom: 20, left: 45};
@@ -266,6 +254,253 @@ evam.Linechart = function(options){
 		this.height 		= this.outerHeight - this.margin.top - this.margin.bottom;
 		this.height2 		= this.outerHeight - this.margin2.top - this.margin2.bottom;
 	}
+	this.rangePadding		= 0;
+};
+evam.XYchart.prototype = Object.create(evam.Graph.prototype);
+evam.XYchart.prototype.initialize = function() { 
+	var xyChart 			= this;
+	this.x 					= evam.selectScaleFormat(this.xAxisType, [0, this.width], this.rangePadding);
+	this.y 					= evam.selectScaleFormat(this.yAxisType, [this.height, 0], this.rangePadding);
+	this.xAxis 				= d3.svg.axis().scale(this.x).orient("bottom").tickSize(-this.height).tickPadding(10).tickFormat(this.tickFormatX).tickSubdivide(true);
+	this.yAxis 				= d3.svg.axis().scale(this.y).orient("left").tickSize(-this.width).tickFormat(this.tickFormatY).tickSubdivide(true);
+	this.svg 				= d3.select(this.parentObject[0]).append("svg").attr("width", this.outerWidth).attr("height", this.outerHeight)
+								.attr("viewBox", "0 0 " + this.outerWidth + " " + this.outerHeight).attr("preserveAspectRatio", "xMidYMid");
+	this.focus 				= this.svg.append("g").attr("class", "focus").attr("transform", "translate(" + xyChart.margin.left + "," + xyChart.margin.top + ")");	
+	if(this.hasBrush) {
+		this.x2 			= evam.selectScaleFormat(this.xAxisType, [0, this.width], this.rangePadding);
+		this.y2 			= evam.selectScaleFormat(this.yAxisType, [this.height2, 0], this.rangePadding);
+		this.xAxis2 		= d3.svg.axis().scale(this.x2).orient("bottom").tickFormat(this.tickFormatX);			
+		this.brushed 		= function() {			
+			if(xyChart.xAxisType == "string") {
+				var startPos = Math.max(0, xyChart.x2.domain().indexOf(xyChart.brush.extent()[0]));
+				var endPos = xyChart.brush.extent()[1] ? xyChart.x2.domain().indexOf(xyChart.brush.extent()[1]) : xyChart.x2.domain().length;
+				if(xyChart.brush.empty()) {
+					xyChart.x.domain(xyChart.x2.domain());
+					startPos = 0;
+					endPos =  xyChart.x2.domain().length;
+				}
+				else {
+					xyChart.x.domain(xyChart.x2.domain().slice(startPos, endPos));
+				}						
+				if(!xyChart.focus.select(".line").empty()) xyChart.focus.select(".line").datum(xyChart.context.select(".line").datum().slice(startPos, endPos));
+				if(!xyChart.focus.select(".area").empty()) xyChart.focus.select(".area").datum(xyChart.context.select(".area").datum().slice(startPos, endPos));
+			}
+			else {
+				xyChart.x.domain(xyChart.brush.empty() ? xyChart.x2.domain() : xyChart.brush.extent());
+			}
+			xyChart.focus.select(".area").attr("d", xyChart.area);
+			xyChart.focus.select(".line").attr("d", xyChart.line);
+			if(!xyChart.focus.selectAll(".bar").empty()) {				
+				var visibleBars = xyChart.focus.selectAll(".bar").filter(function(d, i) { return d.x >= xyChart.x.domain()[0] && d.x <= xyChart.x.domain()[1]; });
+				var barWidth = xyChart.width;
+				visibleBars.each(function(d) {										
+					if(typeof d.previousX != "undefined") {												
+						var diff = xyChart.x(d.x) - xyChart.x(d.previousX);
+						if(diff > 0) barWidth = Math.min(barWidth, diff);
+					}
+				});	
+				barWidth = Math.max(1, barWidth - 1);				
+				xyChart.focus.selectAll(".bar").attr("x", function(d, i) { var xPos = xyChart.x(d.x); return isNaN(xPos) ? -1000 : xPos - (barWidth / 2.0); }).attr("width", barWidth);
+			}
+			if(!xyChart.focus.selectAll(".group").empty()) {				
+				var visibleBars = xyChart.focus.selectAll(".group").filter(function(d, i) { return d.keyVal >= xyChart.x.domain()[0] && d.keyVal <= xyChart.x.domain()[1]; });
+				var barOuterWidth = xyChart.width;
+				visibleBars.each(function(d) {		
+					if(typeof d.previousKey != "undefined") {			
+						var diff = xyChart.x(d.keyVal) - xyChart.x(d.previousKey);
+						if(diff > 0) barOuterWidth = Math.min(barOuterWidth, diff);						
+					}
+				});	
+				barOuterWidth = Math.max(10, barOuterWidth - 1);	
+				xyChart.innerX.rangeRoundBands([5, barOuterWidth - 5]);	
+				xyChart.focus.selectAll(".group").attr("transform", function(d) { return "translate(" + parseFloat(xyChart.x(d.keyVal) - (barOuterWidth / 2.0)) + ",0)"; })
+		 		 			 .selectAll("._bar") 		 			 	 
+	 		 			 	 .attr("x", function(d) { return xyChart.innerX(d.z); })
+	 		 			 	 .attr("width", xyChart.innerX.rangeBand());				
+			}
+			xyChart.focus.select(".x.axis").call(xyChart.xAxis);
+		};
+		this.brush 			= d3.svg.brush().x(this.x2).on("brush", this.brushed);	
+		this.context 		= this.svg.append("g").attr("class", "context").attr("transform", "translate(" + xyChart.margin2.left + "," + xyChart.margin2.top + ")");
+		this.svg.append("defs").append("svg:clipPath").attr("id", "clip_" + this.key).append("svg:rect")
+							   .attr("x", 0).attr("y", 0).attr("width", this.width).attr("height", this.height);
+	}
+};
+evam.XYchart.prototype.prepareData = function(data) {
+	var xyChart = this;
+	// parse & sort data
+	data.forEach(function(d) {
+		d.x = xyChart.parseX(d.x);
+	    d.y = xyChart.parseY(d.y);
+	});	
+	data.sort(function(a, b){ return d3.ascending(a.x, b.x); });
+};
+evam.XYchart.prototype.draw = function(data) {
+	var xyChart = this;	
+	// domains
+	xyChart.x.domain(xyChart.domainX(data.map(function(d) { return d.x; })));	
+	xyChart.y.domain(xyChart.domainY(data.map(function(d) { return d.y; })));
+	if(this.hasBrush) {
+		xyChart.x2.domain(xyChart.x.domain());
+		xyChart.y2.domain(xyChart.y.domain());
+	}
+	// remove old data
+	xyChart.svg.select("g.focus").selectAll("*").remove();
+	xyChart.svg.select("g.context").selectAll("*").remove();
+	// axis		
+	xyChart.focus.append("g").attr("class", "y axis").call(xyChart.yAxis);
+	xyChart.focus.append("text").attr("transform", "rotate(-90)").attr("x", -8).attr("dy", 12).style("text-anchor", "end").text(xyChart.yAxisTitle);
+	xyChart.focus.append("g").attr("class", "x axis").attr("transform", "translate(0," + xyChart.height + ")").call(xyChart.xAxis);
+	xyChart.focus.append("text").attr("x", xyChart.width - 6).attr("y",  xyChart.height - 6).style("text-anchor", "end").text(xyChart.xAxisTitle);
+	if(xyChart.hasBrush) {			
+		xyChart.context.append("g").attr("class", "x axis").attr("transform", "translate(0," + xyChart.height2 + ")").call(xyChart.xAxis2);
+		xyChart.context.append("g").attr("class", "x brush").call(xyChart.brush).selectAll("rect").attr("y", -6).attr("height", xyChart.height2 + 7);
+	}	
+	
+};
+evam.XYchart.prototype.addHighlight = function(data) {
+	var xyChart = this;	
+	// mousemove function		
+	var mousemove = function() {
+	    var mouseX = d3.mouse(this)[0];
+		var x0 = xyChart.x.invert(mouseX);
+        var i = xyChart.bisectY(data, x0, 1);
+        var d0 = data[i - 1];
+        var d1 = data[i];
+        var d = x0 - d0.x > d1.x - x0 ? d1 : d0;
+        highlight.attr("transform", "translate(" + xyChart.x(d.x) + "," + xyChart.y(d.y) + ")");
+	    var text = highlight.select("text");
+	    text.text(xyChart.xAxisTitle + ": " + d.x + " " + xyChart.yAxisTitle + ": " + d.y);		    
+	    if(mouseX < (xyChart.width / 2)) { text.style("text-anchor", "start").attr("x", 12).attr("y", 3); }
+	    else { text.style("text-anchor", "end").attr("x", -12).attr("y", 3); } 	    
+	};
+	// highlight object for point information
+	var highlight = xyChart.focus.append("g").attr("class", "highlight").style("display", "none");
+	highlight.append("circle").attr("r", 10).attr("stroke-width", 2);
+	highlight.append("text").style("fill", "red").style("font-size", "12px").style("font-weight", "bold");
+	xyChart.focus.append("rect").attr("class", "overlay").attr("width", xyChart.width).attr("height", xyChart.height)
+       		     .on("mouseover", function() { highlight.style("display", null); })
+   			     .on("mouseout", function() { highlight.style("display", "none"); })
+   			     .on("mousemove", mousemove);
+};
+
+//Bar Chart
+evam.Barchart = function(options){ 
+	evam.XYchart.call(this, options);	
+	this.domainX			= evam.selectDomainExtentFormat(options.xAxisType, 0.1);
+	this.rangePadding		= 1.0;
+}; 
+evam.Barchart.prototype = Object.create(evam.XYchart.prototype);
+evam.Barchart.prototype.initialize = function() { 
+	evam.XYchart.prototype.initialize.call(this);	
+	this.xAxis.tickSize(6);
+};
+evam.Barchart.prototype.prepareData = function(data) {
+	evam.XYchart.prototype.prepareData.call(this, data);
+	for (var i = 1, n = data.length; i < n; i++) {
+	    data[i].previousX = data[i - 1].x;
+	}
+};
+evam.Barchart.prototype.draw = function(data) { 	
+	evam.XYchart.prototype.draw.call(this, data);	
+	var barChart = this;	
+	// bars
+	var bars = barChart.focus.selectAll(".bar").data(data).enter().insert("rect", ".x.axis").attr("class", "bar");	
+	var barWidth = barChart.width;
+	bars.each(function(d) {		
+		if(typeof d.previousX != "undefined") {
+			var diff = barChart.x(d.x) - barChart.x(d.previousX);
+			if(diff > 0) barWidth = Math.min(barWidth, diff);
+		}
+	});	
+	barWidth = Math.max(1, barWidth - 1);
+	bars.attr("clip-path", "url(#clip_" + barChart.key + ")")
+		.attr("x", function(d) { return barChart.x(d.x) - (barWidth / 2.0); })
+    	.attr("width", barWidth)
+    	.attr("y", function(d) { return barChart.y(d.y); })
+    	.attr("height", function(d) { return barChart.height - barChart.y(d.y); });
+	if(barChart.hasBrush) {
+		var bars2 = barChart.context.selectAll(".bar").data(data).enter().insert("rect", ".x.axis").attr("class", "bar");
+		bars2.attr("clip-path", "url(#clip_" + barChart.key + ")")
+			 .attr("x", function(d) { return barChart.x2(d.x) - (barWidth / 2.0); })
+	    	 .attr("width", barWidth)
+	    	 .attr("y", function(d) { return barChart.y2(d.y); })
+	    	 .attr("height", function(d) { return barChart.height2 - barChart.y2(d.y); });
+	}	
+};
+
+// Group Bar Chart
+evam.GroupBarchart = function(options){ 
+	evam.Barchart.call(this, options);	
+}; 
+evam.GroupBarchart.prototype = Object.create(evam.Barchart.prototype);
+evam.GroupBarchart.prototype.initialize = function() { 
+	evam.Barchart.prototype.initialize.call(this);
+	this.color				= d3.scale.category10();
+	this.innerX 			= d3.scale.ordinal();
+	if(this.hasBrush) {
+		this.innerX2 		= d3.scale.ordinal();
+	}
+};
+evam.GroupBarchart.prototype.prepareData = function(data) {
+	evam.XYchart.prototype.prepareData.call(this, data);
+};
+evam.GroupBarchart.prototype.draw = function(data) {
+	evam.XYchart.prototype.draw.call(this, data);	
+	var groupBarChart = this;
+	// find keys and categorize data	
+	var categoriedData = d3.nest().key(function(d) { return d.x; }).entries(data);	
+	var labelKeys = d3.set(data.map(function(d) { return d.z; })).values();
+	var categoryCount = categoriedData.length;	
+	for (var i = 0; i < categoryCount; i++) {
+		categoriedData[i].keyVal = categoriedData[i].values[0].x;
+		if(i > 0) {
+			categoriedData[i].previousKey = categoriedData[i - 1].keyVal;
+		}		
+	}	
+	// bars	
+	var outerBars = groupBarChart.focus.append("g").attr("clip-path", "url(#clip_" + groupBarChart.key + ")")
+								 .selectAll(".group").data(categoriedData).enter().insert("g", ".x.axis").attr("class", "group");	
+	var barOuterWidth = groupBarChart.width;
+	outerBars.each(function(d) {		
+		if(typeof d.previousKey != "undefined") {			
+			var diff = groupBarChart.x(d.keyVal) - groupBarChart.x(d.previousKey);
+			if(diff > 0) barOuterWidth = Math.min(barOuterWidth, diff);
+		}
+	});	
+	barOuterWidth = Math.max(10, barOuterWidth - 1);	
+	groupBarChart.innerX.domain(labelKeys).rangeRoundBands([5, barOuterWidth - 5]);
+	outerBars.attr("transform", function(d) { return "translate(" + parseFloat(groupBarChart.x(d.keyVal) - (barOuterWidth / 2.0)) + ",0)"; })
+	 		 .selectAll("._bar").data(function(d) { return d.values; }).enter().append("rect").attr("class", "_bar")	 		 
+			 .attr("x", function(d) { return groupBarChart.innerX(d.z); })
+			 .attr("width", groupBarChart.innerX.rangeBand())
+			 .attr("y", function(d) { return groupBarChart.y(d.y); })
+			 .attr("height", function(d) { return groupBarChart.height - groupBarChart.y(d.y); })
+			 .attr("data-legend", function(d) { return d.z; })
+			 .style("fill", function(d) { return groupBarChart.color(d.z); });
+	if(groupBarChart.hasBrush) {
+		groupBarChart.innerX2.domain(labelKeys).rangeRoundBands([5, barOuterWidth - 5]);
+		var outerBars2 = groupBarChart.context.append("g").attr("clip-path", "url(#clip_" + groupBarChart.key + ")")
+									  .selectAll(".group").data(categoriedData).enter().insert("g", ".x.axis").attr("class", "group");
+		outerBars2.attr("transform", function(d) { return "translate(" + parseFloat(groupBarChart.x2(d.keyVal) - (barOuterWidth / 2.0)) + ",0)"; })
+		 		  .selectAll("._bar").data(function(d) { return d.values; }).enter().append("rect").attr("class", "_bar")		 		  
+				  .attr("x", function(d) { return groupBarChart.innerX2(d.z); })
+				  .attr("width", groupBarChart.innerX2.rangeBand())
+				  .attr("y", function(d) { return groupBarChart.y2(d.y); })
+				  .attr("height", function(d) { return groupBarChart.height2 - groupBarChart.y2(d.y); })
+				  .attr("data-legend", function(d) { return d.z; })
+				  .style("fill", function(d) { return groupBarChart.color(d.z); });
+	}	
+	
+	// create legend
+	var legend = groupBarChart.svg.append("g").attr("class","legend").style("font-size", "12px").call(d3.legend);
+	legend.attr("transform","translate(" + (groupBarChart.width + groupBarChart.margin.left - legend.select("rect.legend-box").attr('width')) + "," + (groupBarChart.margin.top + 20) + ")");
+};
+
+// Line Chart
+evam.Linechart = function(options){ 
+	evam.XYchart.call(this, options);
+	this.interpolate		= options.interpolate || 'linear';	
 }; 
 evam.Linechart.prototype = Object.create(evam.XYchart.prototype);
 evam.Linechart.prototype.initialize = function() { 
@@ -273,110 +508,41 @@ evam.Linechart.prototype.initialize = function() {
 	var lineChart 			= this;
 	this.line 				= d3.svg.line().interpolate(lineChart.interpolate)
 										   .x(function(d) { return lineChart.x(d.x); })
-	   									   .y(function(d) { return lineChart.y(d.y); });
-	this.svg 				= d3.select(this.parentObject[0]).append("svg").attr("width", this.outerWidth).attr("height", this.outerHeight)
-								.attr("viewBox", "0 0 " + this.outerWidth + " " + this.outerHeight).attr("preserveAspectRatio", "xMidYMid");
-	this.focus 				= this.svg.append("g").attr("class", "focus").attr("transform", "translate(" + lineChart.margin.left + "," + lineChart.margin.top + ")");
+	   									   .y(function(d) { return lineChart.y(d.y); });	
 	if(this.hasBrush) {
-		this.x2 			= evam.selectScaleFormat(this.xAxisType, [0, this.width]);
-		this.y2 			= evam.selectScaleFormat(this.yAxisType, [this.height2, 0]);
-		this.xAxis2 		= d3.svg.axis().scale(this.x2).orient("bottom").tickFormat(this.tickFormatX);	
 		this.line2 			= d3.svg.line().interpolate(lineChart.interpolate)
 										   .x(function(d) { return lineChart.x2(d.x); })
 		   								   .y(function(d) { return lineChart.y2(d.y); });
-		this.brushed 		= function() {
-			if(lineChart.xAxisType == "string") {
-				var startPos = lineChart.x2.domain().indexOf(lineChart.brush.extent()[0]) - 1;
-				var endPos = lineChart.brush.extent()[1] ? lineChart.x2.domain().indexOf(lineChart.brush.extent()[1]) : lineChart.x2.domain().length;
-				if(lineChart.brush.empty()) {
-					lineChart.x.domain(lineChart.x2.domain());
-					startPos = 0;
-					endPos =  lineChart.x2.domain().length;
-				}
-				else {
-					lineChart.x.domain(lineChart.x2.domain().slice(startPos, endPos));
-				}						
-				lineChart.focus.select(".line").datum(lineChart.context.select(".line").datum().slice(startPos, endPos));
-				lineChart.focus.select(".area").datum(lineChart.context.select(".area").datum().slice(startPos, endPos));
-			}
-			else {
-				lineChart.x.domain(lineChart.brush.empty() ? lineChart.x2.domain() : lineChart.brush.extent());
-			}
-			lineChart.focus.select(".area").attr("d", lineChart.area);
-			lineChart.focus.select(".line").attr("d", lineChart.line);
-			lineChart.focus.select(".x.axis").call(lineChart.xAxis);
-		};
-		this.brush 			= d3.svg.brush().x(this.x2).on("brush", this.brushed);	
-		this.context 		= this.svg.append("g").attr("class", "context").attr("transform", "translate(" + lineChart.margin2.left + "," + lineChart.margin2.top + ")");
-		this.svg.append("clipPath").attr("id", "clip_" + this.key).append("rect").attr("width", this.width).attr("height", this.height);
 	}
-};
-evam.Linechart.prototype.prepareData = function(data) {
-	var lineChart = this;
-	// parse & sort data
-	data.forEach(function(d) {
-		d.x = lineChart.parseX(d.x);
-	    d.y = lineChart.parseY(d.y);
-	});	
-	data.sort(function(a, b){ return d3.ascending(a.x, b.x); });
 };
 evam.Linechart.prototype.draw = function(data) { 	
+	evam.XYchart.prototype.draw.call(this, data);	
 	var lineChart = this;	
-	// domains
-	lineChart.x.domain(lineChart.domainX(data.map(function(d) { return d.x; })));	
-	lineChart.y.domain(lineChart.domainY(data.map(function(d) { return d.y; })));
-	if(this.hasBrush) {
-		lineChart.x2.domain(lineChart.x.domain());
-		lineChart.y2.domain(lineChart.y.domain());
-	}
-	// remove old data
-	lineChart.svg.select("g.focus").selectAll("*").remove();
-	lineChart.svg.select("g.context").selectAll("*").remove();	
-	// upper graph
-	lineChart.focus.append("path").datum(data).attr("class", "line").attr("clip-path", "url(#clip_" + lineChart.key + ")").attr("d", lineChart.line);
-	lineChart.focus.append("g").attr("class", "x axis").attr("transform", "translate(0," + lineChart.height + ")").call(lineChart.xAxis);
-	lineChart.focus.append("text").attr("x", lineChart.width - 6).attr("y",  lineChart.height - 6).style("text-anchor", "end").text(lineChart.xAxisTitle);
-	lineChart.focus.append("g").attr("class", "y axis").call(lineChart.yAxis);
-	lineChart.focus.append("text").attr("transform", "rotate(-90)").attr("x", -8).attr("dy", 12).style("text-anchor", "end").text(lineChart.yAxisTitle);
+	// graphs
+	lineChart.focus.insert("path", ".y.axis").datum(data).attr("class", "line").attr("clip-path", "url(#clip_" + lineChart.key + ")").attr("d", lineChart.line);
 	if(lineChart.hasBrush) {
-		// lower graph		
-		lineChart.context.append("path").datum(data).attr("class", "line").attr("clip-path", "url(#clip_" + lineChart.key + ")").attr("d", lineChart.line2);
-		lineChart.context.append("g").attr("class", "x axis").attr("transform", "translate(0," + lineChart.height2 + ")").call(lineChart.xAxis2);
-		lineChart.context.append("g").attr("class", "x brush").call(lineChart.brush)
-	    		 	  	 .selectAll("rect").attr("y", -6).attr("height", lineChart.height2 + 7);
-	}
-	// mousemove function		
-	var mousemove = function() {
-	    var mouseX = d3.mouse(this)[0];
-		var x0 = lineChart.x.invert(mouseX);
-        var i = lineChart.bisectY(data, x0, 1);
-        var d0 = data[i - 1];
-        var d1 = data[i];
-        var d = x0 - d0.x > d1.x - x0 ? d1 : d0;
-        highlight.attr("transform", "translate(" + lineChart.x(d.x) + "," + lineChart.y(d.y) + ")");
-	    var text = highlight.select("text");
-	    text.text(lineChart.xAxisTitle + ": " + d.x + " " + lineChart.yAxisTitle + ": " + d.y);		    
-	    if(mouseX < (lineChart.width / 2)) {text.style("text-anchor", "start").attr("x", 12).attr("y", 3);}
-	    else {text.style("text-anchor", "end").attr("x", -12).attr("y", 3);} 	    
-	};
-	// highlight object for point information
-	var highlight = lineChart.focus.append("g").attr("class", "highlight").style("display", "none");
-	highlight.append("circle").attr("r", 10).attr("stroke-width", 2);
-	highlight.append("text").style("fill", "red").style("font-size", "12px").style("font-weight", "bold");
-	lineChart.focus.append("rect").attr("class", "overlay").attr("width", lineChart.width).attr("height", lineChart.height)
-       		       .on("mouseover", function() { highlight.style("display", null); })
-   			       .on("mouseout", function() { highlight.style("display", "none"); })
-   			       .on("mousemove", mousemove);	
+		lineChart.context.insert("path", ".y.axis").datum(data).attr("class", "line").attr("clip-path", "url(#clip_" + lineChart.key + ")").attr("d", lineChart.line2);
+	}	
+	evam.XYchart.prototype.addHighlight.call(this, data);
 };
 
 // Multi Series Line Chart
 evam.MultiSeriesLinechart = function(options){ 	
-	evam.Linechart.call(this, options);	
+	evam.XYchart.call(this, options);	
+	this.interpolate		= options.interpolate || 'linear';
 }; 
-evam.MultiSeriesLinechart.prototype = Object.create(evam.Linechart.prototype);
+evam.MultiSeriesLinechart.prototype = Object.create(evam.XYchart.prototype);
 evam.MultiSeriesLinechart.prototype.initialize = function() { 
-	evam.Linechart.prototype.initialize.call(this);
+	evam.XYchart.prototype.initialize.call(this);
 	var multiSeriesChart	= this;
+	this.line 				= d3.svg.line().interpolate(multiSeriesChart.interpolate)
+	  									   .x(function(d) { return multiSeriesChart.x(d.x); })
+	  									   .y(function(d) { return multiSeriesChart.y(d.y); });	
+	if(this.hasBrush) {
+		this.line2 			= d3.svg.line().interpolate(multiSeriesChart.interpolate)
+		   								   .x(function(d) { return multiSeriesChart.x2(d.x); })
+		   								   .y(function(d) { return multiSeriesChart.y2(d.y); });
+	}
 	this.color				= d3.scale.category10();
 	if(this.hasBrush) {
 		this.brushed 		= function() {
@@ -410,28 +576,13 @@ evam.MultiSeriesLinechart.prototype.initialize = function() {
 		multiSeriesChart.brush.on("brush", multiSeriesChart.brushed);
 	}
 };
-evam.MultiSeriesLinechart.prototype.prepareData = function(data) {
-	var multiSeriesChart	 = this;
-	// parse data
-	data.forEach(function(d) {
-		d.x = multiSeriesChart.parseX(d.x);
-	    d.y = multiSeriesChart.parseY(d.y);
-	});		
-};
 evam.MultiSeriesLinechart.prototype.draw = function(data) { 	
-	evam.Linechart.prototype.draw.call(this, data);
+	evam.XYchart.prototype.draw.call(this, data);
 	var multiSeriesChart	 = this;
 	// find keys and categorize data	
 	var categoriedData = d3.nest().key(function(d) { return d.z; })
 						   .sortValues(function(a,b) { return d3.ascending(a.x, b.x); }).entries(data);
 	multiSeriesChart.color.domain(categoriedData.map(function(d) { return d.key; }));
-	// remove lines drawn by linechart
-	multiSeriesChart.focus.select("path").remove();
-	multiSeriesChart.focus.select(".highlight").remove();
-	multiSeriesChart.mousemove = null;
-	if(multiSeriesChart.hasBrush) {
-		multiSeriesChart.context.select("path").remove();
-	}	
 	// add line series
 	var lineSerie = multiSeriesChart.focus.selectAll(".lineSerie").data(categoriedData).enter()
 									.append("g").attr("class", "lineSerie");
@@ -568,7 +719,9 @@ evam.initializePortlet = function(object) {
 		// type specific options
 		if(object.hasClass('linechart') ||
 		   object.hasClass('areachart') ||
-		   object.hasClass('multiserieslinechart'))
+		   object.hasClass('multiserieslinechart') ||
+		   object.hasClass('barchart') ||
+		   object.hasClass('groupbarchart'))
 		{
 			options.xAxis = object.data('x-axis');
 	   	   	options.yAxis = object.data('y-axis');
@@ -594,6 +747,8 @@ evam.initializePortlet = function(object) {
 		case 'linechart': creationFunction = evam.Linechart; break; 
 		case 'areachart': creationFunction = evam.Areachart; break;
 		case 'multiserieslinechart': creationFunction = evam.MultiSeriesLinechart; break;
+		case 'barchart': creationFunction = evam.Barchart; break;
+		case 'groupbarchart': creationFunction = evam.GroupBarchart; break;
 		case 'piechart': creationFunction = evam.Piechart; break;
 		case 'donutchart': creationFunction = evam.Donutchart; break;	
 		}

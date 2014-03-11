@@ -55,12 +55,14 @@ public class DataController {
 				break;
 			case AREA_CHART:
 			case LINE_CHART:
+			case BAR_CHART:
 			case PIE_CHART:
 			case DONUT_CHART:
 			case SELECT_BOX:
 				responseList = portlet.getDataSource().getData2D(dataParameters);
 				break;
 			case MULTISERIES_LINE_CHART:
+			case GROUP_BAR_CHART:
 				responseList = portlet.getDataSource().getData3D(dataParameters);
 				break;
 			case DATA_TABLE:

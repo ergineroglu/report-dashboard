@@ -17,7 +17,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	
 	<!-- css -->
-	<link href="<c:url value="/static/images/favicon.ico" />" rel="shortcut icon">
+	<link href="<c:url value="/static/images/favicon.png" />" rel="shortcut icon">
 	<link href="<c:url value="/static/css/bootstrap.css" />" rel="stylesheet" media="screen">
 	<link href="<c:url value="/static/css/bootstrap-multiselect.css" />" rel="stylesheet" media="screen">
 	<link href="<c:url value="/static/css/datepicker.css" />" rel="stylesheet" media="screen">
@@ -34,7 +34,9 @@
       	<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         	<!-- Brand and toggle get grouped for better mobile display -->
         	<div class="navbar-header">          		
-          		<a class="navbar-brand" href="<c:url value="/dashboard/${userId}" />">EVAM Report Manager</a>
+          		<a class="navbar-brand" href="<c:url value="/dashboard/${userId}" />">
+          			<img src="<c:url value="/static/images/logo.png" />" alt="EVAM Report Manager" />
+       			</a>
         	</div>
         	
         	<!-- Collect the nav links, forms, and other content for toggling

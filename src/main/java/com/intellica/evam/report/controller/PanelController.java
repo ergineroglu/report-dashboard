@@ -35,8 +35,10 @@ import com.intellica.evam.report.data.source.ConstantDataSource;
 import com.intellica.evam.report.data.source.DataSource;
 import com.intellica.evam.report.data.source.DatabaseDataSource;
 import com.intellica.evam.report.model.DashboardAreaChartPortlet;
+import com.intellica.evam.report.model.DashboardBarChartPortlet;
 import com.intellica.evam.report.model.DashboardDataTablePortlet;
 import com.intellica.evam.report.model.DashboardDonutChartPortlet;
+import com.intellica.evam.report.model.DashboardGroupBarChartPortlet;
 import com.intellica.evam.report.model.DashboardInputPortlet;
 import com.intellica.evam.report.model.DashboardInteraction;
 import com.intellica.evam.report.model.DashboardLineChartPortlet;
@@ -46,6 +48,7 @@ import com.intellica.evam.report.model.DashboardPortlet;
 import com.intellica.evam.report.model.DashboardSelectBoxPortlet;
 import com.intellica.evam.report.model.DashboardTab;
 import com.intellica.evam.report.model.DashboardTextboxPortlet;
+import com.intellica.evam.report.model.DashboardXYChartPortlet;
 import com.intellica.evam.report.service.PortletCacheService;
 import com.intellica.evam.report.util.DataSourceType;
 import com.intellica.evam.report.util.ParserUtils;
@@ -152,16 +155,22 @@ public class PanelController {
 		case LINE_CHART:
 		case MULTISERIES_LINE_CHART:
 		case AREA_CHART:
-			DashboardLineChartPortlet lineChart = (DashboardLineChartPortlet) portlet;
+		case BAR_CHART:
+		case GROUP_BAR_CHART:
+			DashboardXYChartPortlet xyChart = (DashboardXYChartPortlet) portlet;
 			// optional fields			
-			lineChart.setAxisXName(ParserUtils.readSingleTagValueString(portletElement, "x-axis"));
-			lineChart.setAxisYName(ParserUtils.readSingleTagValueString(portletElement, "y-axis"));
-			lineChart.setAxisXType(ParserUtils.readSingleTagValueString(portletElement, "x-value-type", "string"));
-			lineChart.setAxisYType(ParserUtils.readSingleTagValueString(portletElement, "y-value-type", "number"));
-			lineChart.setAxisXFormat(ParserUtils.readSingleTagValueString(portletElement, "x-value-format"));
-			lineChart.setAxisYFormat(ParserUtils.readSingleTagValueString(portletElement, "y-value-format"));
-			lineChart.setInterpolationMethod(ParserUtils.readSingleTagValueString(portletElement, "interpolationMethod"));
-			lineChart.setBrush(ParserUtils.readSingleTagValueBoolean(portletElement, "brush"));
+			xyChart.setAxisXName(ParserUtils.readSingleTagValueString(portletElement, "x-axis"));
+			xyChart.setAxisYName(ParserUtils.readSingleTagValueString(portletElement, "y-axis"));
+			xyChart.setAxisXType(ParserUtils.readSingleTagValueString(portletElement, "x-value-type", "string"));
+			xyChart.setAxisYType(ParserUtils.readSingleTagValueString(portletElement, "y-value-type", "number"));
+			xyChart.setAxisXFormat(ParserUtils.readSingleTagValueString(portletElement, "x-value-format"));
+			xyChart.setAxisYFormat(ParserUtils.readSingleTagValueString(portletElement, "y-value-format"));			
+			xyChart.setBrush(ParserUtils.readSingleTagValueBoolean(portletElement, "brush"));
+			if(portletType == PortletType.LINE_CHART || 
+			   portletType == PortletType.MULTISERIES_LINE_CHART || 
+			   portletType == PortletType.AREA_CHART) {
+				((DashboardLineChartPortlet) xyChart).setInterpolationMethod(ParserUtils.readSingleTagValueString(portletElement, "interpolationMethod"));
+			}
 			break;	
 		case DATA_TABLE:
 			DashboardDataTablePortlet tablePortlet = (DashboardDataTablePortlet) portlet;
@@ -202,7 +211,9 @@ public class PanelController {
 		case DATA_TABLE: return new DashboardDataTablePortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		case LINE_CHART: return new DashboardLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		case MULTISERIES_LINE_CHART: return new DashboardMultiseriesLineChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
-		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);		
+		case AREA_CHART: return new DashboardAreaChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
+		case BAR_CHART: return new DashboardBarChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
+		case GROUP_BAR_CHART: return new DashboardGroupBarChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		case PIE_CHART: return new DashboardPieChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		case DONUT_CHART: return new DashboardDonutChartPortlet(dataSource, portletKey, portletTitle, portletWidth, refreshInterval, autoStart);
 		default: return null;

@@ -24,6 +24,8 @@ public class PortletJSTLFunctions {
 		case LINE_CHART:
 		case AREA_CHART:
 		case MULTISERIES_LINE_CHART:
+		case BAR_CHART:
+		case GROUP_BAR_CHART:
 		default:
 			return "glyphicon-signal";
 		case PIE_CHART:

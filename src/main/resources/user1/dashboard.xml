@@ -1,5 +1,209 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <dashboard>
+	
+	<tab>
+		<key>bar_charts</key>
+		<title>Bar Charts</title>
+	
+		<portlet>
+			<key>scenario_values_bar</key>
+			<title>Evam Scenarios Bar Chart String vs Number</title>
+			<type>barchart</type>
+			<width>50</width>			
+			<x-value-type>string</x-value-type>			
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>A Event;500</value>
+					<value>B Event;406.7</value>
+					<value>C Event;195</value>
+					<value>D Event;643</value>
+					<value>E Event;490</value>
+					<value>F Event;1090</value>
+					<value>G Event;60</value>
+					<value>H Event;99</value>
+					<value>44 Event;909</value>
+					<value>12 Event;4</value>
+					<value>4444 Event;2091</value>
+					<value>cc Event;333.888</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_bar2</key>
+			<title>Evam Scenarios Bar Chart Number vs Number</title>
+			<type>barchart</type>
+			<width>50</width>			
+			<x-value-type>number</x-value-type>			
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>3;500</value>
+					<value>12;406.7</value>
+					<value>5;195</value>
+					<value>2;643</value>
+					<value>11;490</value>
+					<value>4;1090</value>
+					<value>20;60</value>
+					<value>21;99</value>
+					<value>19;909</value>
+					<value>15;4</value>
+					<value>14;2091</value>
+					<value>13;333.888</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_bar3</key>
+			<title>Evam Scenarios Bar Chart Time vs Number</title>
+			<type>barchart</type>
+			<width>100</width>			
+			<x-value-type>time</x-value-type>	
+			<x-value-format>%d.%m.%Y</x-value-format>		
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>20.01.2014; 100</value>
+					<value>21.01.2014; 300</value>
+					<value>22.01.2014; 150</value>
+					<value>24.01.2014; 230</value>
+					<value>23.01.2014; 205</value>
+					
+					<value>19.01.2014; 305</value>
+					<value>27.01.2014; 90</value>
+					<value>29.01.2014; 270</value>
+					<value>18.02.2014; 140</value>
+					<value>25.01.2014; 135</value>
+					
+					<value>30.01.2014; 155</value>
+					<value>28.01.2014; 291</value>
+					<value>15.01.2014; 106</value>
+					<value>14.01.2014; 239</value>
+					<value>13.01.2014; 199</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_bar4</key>
+			<title>Evam Scenarios Bar Chart String vs Time</title>
+			<type>barchart</type>
+			<width>40</width>			
+			<x-value-type>string</x-value-type>			
+			<y-value-type>time</y-value-type> 
+			<y-value-format>%d.%m.%Y</y-value-format>
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>A Event;13.02.2014</value>
+					<value>B Event;12.02.2014</value>
+					<value>C Event;01.01.2014</value>
+					<value>D Event;10.03.2014</value>
+					<value>E Event;11.02.2014</value>
+					<value>F Event;12.02.2014</value>
+					<value>G Event;28.02.2014</value>
+					<value>H Event;24.02.2014</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_bar5</key>
+			<title>Evam Scenarios Bar Chart Number vs String</title>
+			<type>barchart</type>
+			<width>60</width>			
+			<x-value-type>number</x-value-type>			
+			<y-value-type>string</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>3;ahmet</value>
+					<value>12;veli</value>
+					<value>5;deli</value>
+					<value>2;çoş</value>
+					<value>11;doş</value>
+					<value>4;koz</value>
+					<value>20;ali</value>
+					<value>21;hami</value>					
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_groupbar1</key>
+			<title>Evam Scenarios Group Bar Chart String vs Number</title>
+			<type>groupbarchart</type>
+			<width>50</width>			
+			<x-value-type>string</x-value-type>			
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>A Event;500;Scenario 1</value>
+					<value>B Event;230;Scenario 1</value>
+					<value>D Event;435;Scenario 1</value>
+					<value>C Event;403;Scenario 1</value>
+					
+					<value>D Event;89;Scenario 2</value>
+					<value>C Event;20;Scenario 2</value>
+					<value>A Event;670;Scenario 2</value>
+					<value>B Event;273;Scenario 2</value>
+					
+					<value>A Event;100;Scenario 3</value>
+					<value>C Event;320;Scenario 3</value>					
+					<value>B Event;221;Scenario 3</value>
+				</values>
+			</data-source>
+		</portlet>
+		
+		<portlet>
+			<key>scenario_values_groupbar2</key>
+			<title>Evam Scenarios Group Bar Chart Time vs Number</title>
+			<type>groupbarchart</type>
+			<width>50</width>			
+			<x-value-type>time</x-value-type>	
+			<x-value-format>%d.%m.%Y</x-value-format>		
+			<y-value-type>number</y-value-type> 
+			<brush>true</brush>
+			<data-source>
+				<type>constant</type>
+				<values>
+					<delimiter>;</delimiter>
+					<value>10.02.2014;500;Scenario 1</value>
+					<value>11.02.2014;230;Scenario 1</value>
+					<value>13.02.2014;435;Scenario 1</value>
+					<value>12.02.2014;403;Scenario 1</value>
+					
+					<value>10.02.2014;89;Scenario 2</value>
+					<value>13.02.2014;20;Scenario 2</value>
+					<value>12.02.2014;670;Scenario 2</value>
+					<value>11.02.2014;273;Scenario 2</value>
+					
+					<value>10.02.2014;100;Scenario 3</value>
+					<value>12.02.2014;320;Scenario 3</value>					
+					<value>13.02.2014;221;Scenario 3</value>
+				</values>
+			</data-source>
+		</portlet>
+	</tab>
+	
 	<tab>
 		<key>scenario_view</key>
 		<title>Scenario View</title>
@@ -43,7 +247,7 @@
 		<portlet>
 			<key>scenario_values3</key>
 			<title>Evam Scenarios</title>
-			<type>areachart</type>
+			<type>piechart</type>
 			<width>40</width>
 			<x-axis>Event Time</x-axis>
 			<y-axis>Event Count</y-axis>
@@ -115,7 +319,7 @@
 			<key>scenario_values</key>
 			<title>Evam Scenarios Brush String</title>
 			<type>areachart</type>
-			<width>100</width>
+			<width>50</width>
 			<brush>true</brush>			
 			<x-value-type>string</x-value-type>			
 			<y-value-type>number</y-value-type> 
@@ -136,7 +340,7 @@
 			<key>scenario_values_multiseries2</key>
 			<title>Multi Series Line Chart DB</title>
 			<type>multiserieslinechart</type>
-			<width>100</width>			
+			<width>50</width>			
 			<x-value-type>string</x-value-type>	
 			<y-value-type>number</y-value-type> 
 			<brush>true</brush>

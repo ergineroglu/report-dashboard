@@ -15,7 +15,7 @@
 }
 	
 .evam_graph.areachart path.area, 
-.evam_graph.areachartbrush path.area {
+.evam_graph.barchart rect.bar {
 	fill: steelblue;
 }
 
@@ -35,7 +35,6 @@
 }
 
 .evam_graph.linechart .overlay,
-.evam_graph.multiserieslinechart .overlay,
 .evam_graph.areachart .overlay {
  	fill: none;
   	pointer-events: all;
@@ -43,7 +42,9 @@
 
 .evam_graph.linechart .brush .extent,
 .evam_graph.multiserieslinechart .brush .extent,
-.evam_graph.areachart .brush .extent {
+.evam_graph.areachart .brush .extent,
+.evam_graph.barchart .brush .extent,
+.evam_graph.groupbarchart .brush .extent {
   	stroke: #fff;
   	fill-opacity: .250;
   	shape-rendering: crispEdges;
@@ -51,13 +52,15 @@
 
 .evam_graph.multiserieslinechart .legend,
 .evam_graph.piechart .legend,
-.evam_graph.donutchart .legend {
+.evam_graph.donutchart .legend,
+.evam_graph.groupbarchart .legend {
 	pointer-events: none;
 }
 
 .evam_graph.multiserieslinechart .legend rect,
 .evam_graph.piechart .legend rect,
-.evam_graph.donutchart .legend rect {
+.evam_graph.donutchart .legend rect,
+.evam_graph.groupbarchart .legend rect {
 	fill: #eee;
   	stroke: black;
   	opacity: 0.6;

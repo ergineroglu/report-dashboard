@@ -56,7 +56,7 @@
 				
 				<c:when test="${dashboardPortlet.value.portletType == 'LINE_CHART' ||
 								dashboardPortlet.value.portletType == 'MULTISERIES_LINE_CHART' ||
-								dashboardPortlet.value.portletType == 'AREA_CHART' }" >
+								dashboardPortlet.value.portletType == 'AREA_CHART'}">
 					
 					<div id="evam_drawing_${dashboardPortlet.key}" 
 						 class="evam_graph ${dashboardPortlet.value.portletType.name}"
@@ -73,7 +73,29 @@
 						 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
 						 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
 						 data-brush="${dashboardPortlet.value.brush}"
-						 data-interpolate="${dashboardPortlet.value.interpolationMethod}">
+						 data-interpolate="${dashboardPortlet.value.interpolationMethod}" >
+					</div>
+				
+				</c:when>
+								
+				<c:when test="${dashboardPortlet.value.portletType == 'BAR_CHART' ||
+								dashboardPortlet.value.portletType == 'GROUP_BAR_CHART' }" >
+					
+					<div id="evam_drawing_${dashboardPortlet.key}" 
+						 class="evam_graph ${dashboardPortlet.value.portletType.name}"
+						 data-title="${dashboardPortlet.value.portletTitle}"
+						 data-key="${dashboardPortlet.key}"
+						 data-type="${dashboardPortlet.value.portletType.name}"
+						 data-refresh-interval="${dashboardPortlet.value.refreshInterval}"
+						 data-auto-start="${dashboardPortlet.value.autoStart}"
+						 data-request-url="${dashboardPortletUrl}"
+						 data-x-axis="${dashboardPortlet.value.axisXName}"
+						 data-y-axis="${dashboardPortlet.value.axisYName}"
+						 data-x-axis-type="${dashboardPortlet.value.axisXType}"
+						 data-y-axis-type="${dashboardPortlet.value.axisYType}"
+						 data-x-axis-format="${dashboardPortlet.value.axisXFormat}"
+						 data-y-axis-format="${dashboardPortlet.value.axisYFormat}"
+						 data-brush="${dashboardPortlet.value.brush}" >
 					</div>
 				</c:when>
 				
