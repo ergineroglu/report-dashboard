@@ -20,17 +20,17 @@ public class PortletJSTLFunctions {
 		case SELECT_BOX:
 			return "glyphicon-edit";
 		case DATA_TABLE:
-			return "glyphicon-th";
+			return "glyphicon-list-alt";
 		case LINE_CHART:
 		case AREA_CHART:
-		case MULTISERIES_LINE_CHART:
+		case MULTISERIES_LINE_CHART:				
 		case BAR_CHART:
 		case GROUP_BAR_CHART:
 		default:
-			return "glyphicon-signal";
+			return "glyphicon-stats";
 		case PIE_CHART:
 		case DONUT_CHART:
-			return "glyphicon-adjust";
+			return "glyphicon-dashboard";
 		}
 	}	
 }

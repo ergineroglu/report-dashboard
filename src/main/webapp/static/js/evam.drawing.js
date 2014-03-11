@@ -459,8 +459,8 @@ evam.GroupBarchart.prototype.draw = function(data) {
 		}		
 	}	
 	// bars	
-	var outerBars = groupBarChart.focus.append("g").attr("clip-path", "url(#clip_" + groupBarChart.key + ")")
-								 .selectAll(".group").data(categoriedData).enter().insert("g", ".x.axis").attr("class", "group");	
+	var outerBars = groupBarChart.focus.insert("g", ".x.axis").attr("clip-path", "url(#clip_" + groupBarChart.key + ")")
+								 .selectAll(".group").data(categoriedData).enter().append("g").attr("class", "group");	
 	var barOuterWidth = groupBarChart.width;
 	outerBars.each(function(d) {		
 		if(typeof d.previousKey != "undefined") {			
@@ -480,8 +480,8 @@ evam.GroupBarchart.prototype.draw = function(data) {
 			 .style("fill", function(d) { return groupBarChart.color(d.z); });
 	if(groupBarChart.hasBrush) {
 		groupBarChart.innerX2.domain(labelKeys).rangeRoundBands([5, barOuterWidth - 5]);
-		var outerBars2 = groupBarChart.context.append("g").attr("clip-path", "url(#clip_" + groupBarChart.key + ")")
-									  .selectAll(".group").data(categoriedData).enter().insert("g", ".x.axis").attr("class", "group");
+		var outerBars2 = groupBarChart.context.insert("g", ".x.axis").attr("clip-path", "url(#clip_" + groupBarChart.key + ")")
+									  .selectAll(".group").data(categoriedData).enter().append("g").attr("class", "group");
 		outerBars2.attr("transform", function(d) { return "translate(" + parseFloat(groupBarChart.x2(d.keyVal) - (barOuterWidth / 2.0)) + ",0)"; })
 		 		  .selectAll("._bar").data(function(d) { return d.values; }).enter().append("rect").attr("class", "_bar")		 		  
 				  .attr("x", function(d) { return groupBarChart.innerX2(d.z); })
@@ -648,7 +648,7 @@ evam.Piechart = function(options) {
 evam.Piechart.prototype = Object.create(evam.Graph.prototype);
 evam.Piechart.prototype.initialize = function() {
 	evam.Graph.prototype.initialize.call(this);
-	this.color 				= d3.scale.category20c();
+	this.color 				= d3.scale.category20();
 	this.arc 				= d3.svg.arc().outerRadius(this.radius).innerRadius(this.innerRadius);
 	this.pie 				= d3.layout.pie().sort(null).value(function(d) {
 		return d.y;
